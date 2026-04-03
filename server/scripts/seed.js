@@ -1234,6 +1234,116 @@ const pythonCourse = {
         ]
       }
     },
+    { 
+      levelNum:5, 
+      title:'Functions & Advanced',    
+      icon:'🚀', 
+      description:'Functions, comprehensions, and sets.',
+      theory: {
+        title: 'Functions & Advanced Data Structures',
+        emoji: '🚀',
+        description: 'Create reusable code blocks with functions. Master list/dict comprehensions and set operations for advanced data manipulation.',
+        topics: [
+          {
+            name: 'Defining Functions',
+            emoji: '⚙️',
+            content: 'Functions are reusable blocks of code. Define once, call many times.',
+            codeExamples: [
+              {
+                title: 'Basic Function',
+                code: '# Define a function\ndef greet(name):\n    return f"Hello, {name}!"\n\n# Call the function\nprint(greet("Alice"))    # Hello, Alice!\nprint(greet("Bob"))      # Hello, Bob!',
+                explanation: 'Use `def` keyword to define. `return` sends value back to caller.'
+              },
+              {
+                title: 'Default Parameters',
+                code: '# Parameter with default value\ndef power(base, exponent=2):\n    return base ** exponent\n\nprint(power(5))          # 25 (uses default exponent=2)\nprint(power(5, 3))       # 125 (custom exponent)',
+                explanation: 'Default values make parameters optional.'
+              }
+            ],
+            keyRules: [
+              'Use <code>def functionName(params):</code> to define.',
+              '<code>return</code> sends value back (function ends here).',
+              'Default parameters: <code>def func(x=default):</code>',
+              'Function names follow same rules as variables.'
+            ]
+          },
+          {
+            name: 'List & Dict Comprehensions',
+            emoji: '🎯',
+            content: 'Compact syntax for creating lists and dicts.',
+            codeExamples: [
+              {
+                title: 'List Comprehension',
+                code: '# Create list of squares\nsquares = [x**2 for x in range(5)]\nprint(squares)  # [0, 1, 4, 9, 16]\n\n# With condition (only even numbers)\nevens = [x for x in range(10) if x % 2 == 0]\nprint(evens)    # [0, 2, 4, 6, 8]',
+                explanation: 'Syntax: [expression for item in iterable if condition]'
+              },
+              {
+                title: 'Dict Comprehension',
+                code: '# Create dict of squares\nsquares_dict = {x: x**2 for x in range(5)}\nprint(squares_dict)  # {0: 0, 1: 1, 2: 4, 3: 9, 4: 16}\n\n# From another dict\nuser = {"name": "Alice", "age": 25}\nuppers = {k: v.upper() if isinstance(v, str) else v for k, v in user.items()}',
+                explanation: 'Dict comprehension syntax: {key: value for item in iterable}'
+              }
+            ],
+            keyRules: [
+              'List comprehension: <code>[expr for x in iterable if condition]</code>',
+              'Dict comprehension: <code>{k: v for x in iterable}</code>',
+              'Much faster than loops for creating collections.',
+              'Readable and Pythonic!'
+            ]
+          },
+          {
+            name: 'Sets & Operations',
+            emoji: '⭕',
+            content: 'Unordered collections of unique items. Perfect for removing duplicates and checking membership.',
+            codeExamples: [
+              {
+                title: 'Set Basics',
+                code: '# Create set (removes duplicates automatically)\ntags = {"python", "coding", "python", "tutorial"}  # Dup removed\nprint(tags)  # {"python", "coding", "tutorial"}\n\n# Convert list to set\nduplicates = [1, 2, 2, 3, 3, 3]\nunique = set(duplicates)\nprint(unique)  # {1, 2, 3}',
+                explanation: 'Sets store unique values only. Order is not guaranteed.'
+              },
+              {
+                title: 'Set Operations',
+                code: 'set_a = {1, 2, 3, 4}\nset_b = {3, 4, 5, 6}\n\n# Union (all items from both)\nunion = set_a | set_b  # {1, 2, 3, 4, 5, 6}\n\n# Intersection (only common items)\nintersection = set_a & set_b  # {3, 4}\n\n# Difference (in A but not B)\ndifference = set_a - set_b  # {1, 2}',
+                explanation: 'Set operations are fast and useful for data analysis.'
+              }
+            ],
+            keyRules: [
+              'Sets use curly braces: <code>{ }</code> (but no key:value like dicts).',
+              'Duplicates are automatically removed.',
+              'Useful for: removing duplicates, checking membership, set operations.',
+              '<code>|</code> union, <code>&</code> intersection, <code>-</code> difference.'
+            ]
+          }
+        ],
+        quickQuiz: [
+          {
+            question: 'What does `[x * 2 for x in range(5)]` produce?',
+            options: ['[0, 1, 2, 3, 4]', '[0, 2, 4, 6, 8]', '[2, 4, 6, 8, 10]', '[1, 2, 4, 8, 16]'],
+            correctAnswer: 2
+          },
+          {
+            question: 'What\'s the result of `{1, 2, 2, 3, 3, 3}`?',
+            options: ['{1, 2, 2, 3, 3, 3}', '{1, 2, 3}', '[1, 2, 3]', 'Error'],
+            correctAnswer: 1
+          }
+        ],
+        references: [
+          {
+            title: 'Python.org: Functions',
+            author: 'Python Software Foundation',
+            url: 'https://docs.python.org/3/tutorial/controlflow.html#defining-functions',
+            emoji: '🐍',
+            type: 'docs'
+          },
+          {
+            title: 'Real Python: List Comprehensions',
+            author: 'Real Python',
+            url: 'https://realpython.com/list-comprehensions-and-generator-expressions/',
+            emoji: '🔗',
+            type: 'website'
+          }
+        ]
+      }
+    },
   ],
 };
 
@@ -1317,6 +1427,26 @@ const pythonChallenges = [
     storyContext:'The mirror realm reverses all mappings.',
     hints:['Loop through d.items(), swap key and value in new dict.'],
     testCases:[{args:[{a:'1',b:'2'}],expected:{'1':'a','2':'b'},description:'invert'}] },
+
+  // Level 5
+  { levelNum:5, order:0, title:'Define Function',     functionName:'add',          difficulty:medium, xpReward:30, tags:['functions','python'],
+    description:'Define a function `add(a, b)` that returns the sum of two numbers.',
+    starterCode:'def add(a, b):\n    # Return the sum\n    pass',
+    storyContext:'Teach the apprentice the spell of addition.',
+    hints:['Simply return a + b.'],
+    testCases:[{args:[3,5],expected:8,description:'add 3+5'},{args:[10,20],expected:30,description:'add 10+20'},{args:[-5,3],expected:-2,description:'add negative'}] },
+  { levelNum:5, order:1, title:'List Comprehension',   functionName:'tripleNums',    difficulty:medium, xpReward:35, tags:['functions','arrays','python'],
+    description:'Use list comprehension to return a list where each number from input list is tripled.',
+    starterCode:'def tripleNums(nums):\n    # Use list comprehension to triple each number\n    pass',
+    storyContext:'The magic amplifier triples all the dragon gem values.',
+    hints:['Use [x*3 for x in nums] notation.'],
+    testCases:[{args:[[1,2,3]],expected:[3,6,9],description:'triple [1,2,3]'},{args:[[0,5,10]],expected:[0,15,30],description:'triple [0,5,10]'}] },
+  { levelNum:5, order:2, title:'Remove Duplicates Set',functionName:'getDuplicatesFree',difficulty:hard, xpReward:40, tags:['functions','sets','python'],
+    description:'Use a set to remove duplicates from a list and return a sorted list of unique values.',
+    starterCode:'def getDuplicatesFree(lst):\n    # Use set to remove duplicates, return sorted list\n    pass',
+    storyContext:'Filter the ore collection — remove duplicate stones and sort by purity.',
+    hints:['Convert to set with set(lst), then back to list with list(...), then sort.'],
+    testCases:[{args:[[5,2,5,3,2,1]],expected:[1,2,3,5],description:'unique sorted'},{args:[[9,9,9]],expected:[9],description:'all same'}] },
 ];
 
 /* ════════════════════════════════════════════════════

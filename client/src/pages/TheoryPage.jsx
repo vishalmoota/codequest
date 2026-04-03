@@ -25,52 +25,109 @@ const LANG_META = {
 const getLangMeta = (lang) =>
   LANG_META[lang?.toLowerCase()] || LANG_META.javascript;
 
-// Pyodide singleton
-let pyodideInstance = null;
-let pyodideLoading = false;
-let pyodideCallbacks = [];
+// Module-level singleton — shared across all renders
+let _pyodideInstance = null;
+let _pyodideLoadPromise = null;
 
-const loadPyodide = () => new Promise((resolve, reject) => {
-  if (pyodideInstance) return resolve(pyodideInstance);
-  pyodideCallbacks.push({ resolve, reject });
-  if (pyodideLoading) return;
-  pyodideLoading = true;
-  const script = document.createElement('script');
-  script.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js';
-  script.onload = async () => {
-    try {
-      const py = await window.loadPyodide();
-      pyodideInstance = py;
-      pyodideCallbacks.forEach(cb => cb.resolve(py));
-      pyodideCallbacks = [];
-    } catch(e) {
-      pyodideCallbacks.forEach(cb => cb.reject(e));
-      pyodideCallbacks = [];
+const loadPyodide = () => {
+  // Return existing instance immediately
+  if (_pyodideInstance) {
+    return Promise.resolve(_pyodideInstance);
+  }
+  // Return existing promise if already loading
+  if (_pyodideLoadPromise) {
+    return _pyodideLoadPromise;
+  }
+  // Start loading
+  _pyodideLoadPromise = new Promise((resolve, reject) => {
+    // Check if already loaded in window
+    if (window.pyodide) {
+      _pyodideInstance = window.pyodide;
+      return resolve(_pyodideInstance);
     }
-  };
-  script.onerror = (e) => {
-    pyodideCallbacks.forEach(cb => cb.reject(e));
-    pyodideCallbacks = [];
-  };
-  document.head.appendChild(script);
-});
+    
+    const existingScript = document.querySelector(
+      'script[src*="pyodide"]'
+    );
+    
+    const onLoad = async () => {
+      try {
+        const py = await window.loadPyodide({
+          indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/',
+        });
+        _pyodideInstance = py;
+        window.pyodide = py; // Cache on window too
+        resolve(py);
+      } catch (e) {
+        _pyodideLoadPromise = null; // Allow retry
+        reject(e);
+      }
+    };
+
+    if (existingScript) {
+      if (window.loadPyodide) {
+        onLoad();
+      } else {
+        existingScript.addEventListener('load', onLoad);
+      }
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 
+      'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js';
+    script.onload = onLoad;
+    script.onerror = (e) => {
+      _pyodideLoadPromise = null;
+      reject(new Error('Failed to load Pyodide script'));
+    };
+    document.head.appendChild(script);
+  });
+
+  return _pyodideLoadPromise;
+};
+
 
 const runPython = async (code) => {
   const py = await loadPyodide();
-  py.runPython('import sys, io; sys.stdout = io.StringIO()');
   try {
+    // Redirect stdout to capture print() output
+    py.runPython(`
+import sys
+import io
+sys.stdout = io.StringIO()
+`);
     py.runPython(code);
-    return py.runPython('sys.stdout.getvalue()') || '(no output)';
-  } catch(e) { throw new Error(e.message); }
+    const output = py.runPython('sys.stdout.getvalue()');
+    return output || '(no output)';
+  } catch (e) {
+    // Get clean error message without Pyodide internal stack
+    const msg = e.message || String(e);
+    const lines = msg.split('\n');
+    // Return only the last meaningful error line
+    const errorLine = lines.filter(l => l.trim()).pop() || msg;
+    throw new Error(errorLine);
+  }
 };
 
 const runJavaScript = (code) => {
   const logs = [];
-  const fakeConsole = { log: (...a) => logs.push(a.join(' ')) };
+  const fakeConsole = {
+    log: (...args) => logs.push(
+      args.map(a => 
+        typeof a === 'object' ? JSON.stringify(a) : String(a)
+      ).join(' ')
+    ),
+    error: (...args) => logs.push('ERROR: ' + args.join(' ')),
+    warn: (...args) => logs.push('WARN: ' + args.join(' ')),
+  };
   try {
+    // eslint-disable-next-line no-new-func
     new Function('console', code)(fakeConsole);
     return logs.join('\n') || '(no output)';
-  } catch(e) { throw new Error(e.message); }
+  } catch (e) {
+    throw new Error(e.message);
+  }
 };
 
 // Theory content per course language and level
@@ -1029,40 +1086,60 @@ const TheoryPage = () => {
   }, [currentSection, lang, theoryData.sections, langMeta]);
 
   useEffect(() => {
-    if (lang === 'python') {
+    if (!course) return;
+    const courseLang = course?.language?.toLowerCase();
+    if (courseLang === 'python') {
       setPyodideLoading(true);
       loadPyodide()
-        .then(() => { setPyodideReady(true); setPyodideLoading(false); })
-        .catch(() => setPyodideLoading(false));
+        .then(() => {
+          setPyodideReady(true);
+          setPyodideLoading(false);
+          console.log('Pyodide loaded successfully for TheoryPage');
+        })
+        .catch((err) => {
+          console.error('Pyodide failed to load:', err);
+          setPyodideLoading(false);
+        });
     }
-  }, [lang]);
+  }, [course]); // depends on course, not lang string
 
   const handleRun = useCallback(async () => {
     if (!code.trim()) return;
     setIsRunning(true);
     setOutput('');
+
     try {
-      if (lang === 'python') {
+      // Detect language from course object
+      const courseLang = course?.language?.toLowerCase() || 'javascript';
+      
+      if (courseLang === 'python') {
         if (!pyodideReady) {
-          setOutput('⏳ Python runtime loading... please wait.');
+          setOutput(
+            '⏳ Python is still loading... please wait 10-15 ' +
+            'seconds and try again.\n\nPyodide (Python runtime) ' +
+            'needs to download on first use.'
+          );
           setIsRunning(false);
           return;
         }
         const result = await runPython(code);
         setOutput(result);
-      } else if (lang === 'html') {
-        if (iframeRef.current) iframeRef.current.srcdoc = code;
-        setOutput('HTML rendered in preview.');
+      } else if (courseLang === 'html') {
+        if (iframeRef.current) {
+          iframeRef.current.srcdoc = code;
+        }
+        setOutput('✅ HTML rendered in preview below.');
       } else {
+        // JavaScript
         const result = runJavaScript(code);
         setOutput(result);
       }
     } catch (e) {
-      setOutput(`❌ Error: ${e.message}`);
+      setOutput(`❌ Error:\n${e.message}`);
     } finally {
       setIsRunning(false);
     }
-  }, [code, lang, pyodideReady]);
+  }, [code, course, pyodideReady]);
 
   const handleSectionComplete = () => {
     if (!completedSections.includes(currentSection)) {
@@ -1331,13 +1408,28 @@ const TheoryPage = () => {
             <span className="text-xs text-gray-500 font-mono">
               Try the code — modify and experiment!
             </span>
-            <button onClick={handleRun} disabled={isRunning}
+            <button
+              onClick={handleRun}
+              disabled={isRunning || 
+                (lang === 'python' && !pyodideReady)}
               className="flex items-center gap-2 px-4 py-1.5 text-sm
                          font-mono font-bold rounded-lg text-black
                          transition hover:opacity-90
                          disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ backgroundColor: langMeta.accent }}>
-              {isRunning ? '⏳ Running...' : '▶ Run'}
+              style={{ backgroundColor: langMeta.accent }}
+              title={
+                lang === 'python' && !pyodideReady
+                  ? 'Python runtime is loading, please wait...'
+                  : ''
+              }
+            >
+              {isRunning
+                ? '⏳ Running...'
+                : lang === 'python' && pyodideLoading
+                ? '⏳ Loading Python...'
+                : lang === 'python' && !pyodideReady
+                ? '⏳ Loading Python...'
+                : '▶ Run'}
             </button>
           </div>
 

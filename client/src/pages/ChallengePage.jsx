@@ -35,53 +35,100 @@ const LANG_META = {
 const getLangMeta = (lang) =>
   LANG_META[lang?.toLowerCase()] || LANG_META.javascript;
 
-// ── Pyodide Python runner ─────────────────────────────────────────────────────
-let pyodideInstance = null;
-let pyodideLoading = false;
-let pyodideCallbacks = [];
+// Module-level singleton — shared across all renders
+let _pyodideInstance = null;
+let _pyodideLoadPromise = null;
 
-const loadPyodide = () =>
-  new Promise((resolve, reject) => {
-    if (pyodideInstance) return resolve(pyodideInstance);
-    pyodideCallbacks.push({ resolve, reject });
-    if (pyodideLoading) return;
-    pyodideLoading = true;
-    const script = document.createElement('script');
-    script.src =
-      'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js';
-    script.onload = async () => {
+const loadPyodide = () => {
+  // Return existing instance immediately
+  if (_pyodideInstance) {
+    return Promise.resolve(_pyodideInstance);
+  }
+  // Return existing promise if already loading
+  if (_pyodideLoadPromise) {
+    return _pyodideLoadPromise;
+  }
+  // Start loading
+  _pyodideLoadPromise = new Promise((resolve, reject) => {
+    // Check if already loaded in window
+    if (window.pyodide) {
+      _pyodideInstance = window.pyodide;
+      return resolve(_pyodideInstance);
+    }
+    
+    const existingScript = document.querySelector(
+      'script[src*="pyodide"]'
+    );
+    
+    const onLoad = async () => {
       try {
-        const py = await window.loadPyodide();
-        pyodideInstance = py;
-        pyodideCallbacks.forEach((cb) => cb.resolve(py));
-        pyodideCallbacks = [];
+        const py = await window.loadPyodide({
+          indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/',
+        });
+        _pyodideInstance = py;
+        window.pyodide = py; // Cache on window too
+        resolve(py);
       } catch (e) {
-        pyodideCallbacks.forEach((cb) => cb.reject(e));
-        pyodideCallbacks = [];
+        _pyodideLoadPromise = null; // Allow retry
+        reject(e);
       }
     };
+
+    if (existingScript) {
+      if (window.loadPyodide) {
+        onLoad();
+      } else {
+        existingScript.addEventListener('load', onLoad);
+      }
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 
+      'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js';
+    script.onload = onLoad;
     script.onerror = (e) => {
-      pyodideCallbacks.forEach((cb) => cb.reject(e));
-      pyodideCallbacks = [];
+      _pyodideLoadPromise = null;
+      reject(new Error('Failed to load Pyodide script'));
     };
     document.head.appendChild(script);
   });
 
+  return _pyodideLoadPromise;
+};
+
+
 const runPython = async (code) => {
   const py = await loadPyodide();
-  py.runPython('import sys, io; sys.stdout = io.StringIO()');
   try {
+    py.runPython(`
+import sys
+import io
+sys.stdout = io.StringIO()
+`);
     py.runPython(code);
-    return py.runPython('sys.stdout.getvalue()') || '(no output)';
+    const output = py.runPython('sys.stdout.getvalue()');
+    return output || '(no output)';
   } catch (e) {
-    throw new Error(e.message);
+    const msg = e.message || String(e);
+    const lines = msg.split('\n');
+    const errorLine = lines.filter(l => l.trim()).pop() || msg;
+    throw new Error(errorLine);
   }
 };
 
 // ── JavaScript runner ─────────────────────────────────────────────────────────
 const runJavaScript = (code) => {
   const logs = [];
-  const fakeConsole = { log: (...a) => logs.push(a.join(' ')) };
+  const fakeConsole = {
+    log: (...args) => logs.push(
+      args.map(a => 
+        typeof a === 'object' ? JSON.stringify(a) : String(a)
+      ).join(' ')
+    ),
+    error: (...args) => logs.push('ERROR: ' + args.join(' ')),
+    warn: (...args) => logs.push('WARN: ' + args.join(' ')),
+  };
   try {
     // eslint-disable-next-line no-new-func
     new Function('console', code)(fakeConsole);
@@ -190,27 +237,32 @@ const ChallengePage = () => {
     setSubmitResult(null);
 
     try {
-      const lang = challenge?.language?.toLowerCase() || 'javascript';
+      const courseLang = challenge?.language?.toLowerCase() || 
+                         'javascript';
 
-      if (lang === 'python') {
+      if (courseLang === 'python') {
         if (!pyodideReady) {
-          setOutput('⏳ Python runtime is loading... please wait a moment and try again.');
+          setOutput(
+            '⏳ Python runtime is loading...\n\nPlease wait ' +
+            '10-15 seconds for Pyodide to initialize, ' +
+            'then click Run again.'
+          );
           setIsRunning(false);
           return;
         }
         const result = await runPython(code);
         setOutput(result);
-      } else if (lang === 'html') {
+      } else if (courseLang === 'html') {
         if (iframeRef.current) {
           iframeRef.current.srcdoc = code;
         }
-        setOutput('HTML rendered in preview below.');
+        setOutput('✅ HTML rendered in preview.');
       } else {
         const result = runJavaScript(code);
         setOutput(result);
       }
     } catch (e) {
-      setOutput(`❌ Error: ${e.message}`);
+      setOutput(`❌ Error:\n${e.message}`);
     } finally {
       setIsRunning(false);
     }
@@ -222,48 +274,237 @@ const ChallengePage = () => {
       navigate('/login');
       return;
     }
+    
+    const courseLang = (() => {
+      const chLang = challenge?.language?.toLowerCase();
+      const crsLang = course?.language?.toLowerCase();
+      if (chLang && chLang !== 'javascript') return chLang;
+      if (crsLang) return crsLang;
+      return chLang || 'javascript';
+    })();
+
+    // ── Basic validation ──────────────────────────────────
+    if (!code.trim()) {
+      setSubmitResult({
+        success: false,
+        message: '⚠️ Please write your solution first.',
+      });
+      return;
+    }
+
+    const starterCode = challenge?.starterCode || '';
+    if (code.trim() === starterCode.trim()) {
+      setSubmitResult({
+        success: false,
+        message: '⚠️ Please write your own solution, not the starter code.',
+      });
+      return;
+    }
+
+    if (courseLang === 'python' && 
+        code.includes('pass') &&
+        code.split('\n').filter(
+          l => l.trim() && !l.trim().startsWith('#')
+        ).length <= 3) {
+      setSubmitResult({
+        success: false,
+        message: '⚠️ Replace the "pass" placeholder with your actual Python solution.',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitResult(null);
 
     try {
-      const res = await axios.post(`/challenges/${challengeId}/submit`, { code });
-      const data = res.data;
-      setSubmitResult(data);
+      // ── PYTHON: test locally with Pyodide ─────────────
+      if (courseLang === 'python') {
+        if (!pyodideReady) {
+          setSubmitResult({
+            success: false,
+            message: '⏳ Python runtime is still loading. Please wait and try again.',
+          });
+          setIsSubmitting(false);
+          return;
+        }
 
-      // Check success using whatever field the backend returns
-      const succeeded =
-        data.success || data.allPassed || data.passed;
-
-      if (succeeded) {
-        setShowSuccess(true);
-        setTimeout(() => setShowSuccess(false), 3000);
-
-        // Update streak
-        try {
-          await axios.put('/gamification/streak');
-        } catch (_) {}
-
-        // Check if last challenge in level — trigger level unlock
-        try {
-          const isLastChallenge =
-            currentIndex === allChallenges.length - 1;
-          if (
-            isLastChallenge &&
-            challenge?.courseId &&
-            challenge?.levelNum
-          ) {
-            await axios.post('/gamification/level-up', {
-              courseId: challenge.courseId,
-              levelNum: challenge.levelNum,
+        // Run each test case using Pyodide
+        const testCases = challenge.testCases || [];
+        
+        if (testCases.length === 0) {
+          // No test cases — just check code runs without error
+          try {
+            await runPython(code + '\n');
+            // Code runs OK — send to backend to record XP
+            const res = await axios.post(
+              `/challenges/${challengeId}/submit`, { code }
+            );
+            const data = res.data;
+            setSubmitResult({
+              success: true,
+              allPassed: true,
+              message: 'Code runs without errors!',
+              xpAwarded: data.xpAwarded || challenge.xpReward || 10,
+            });
+            setShowSuccess(true);
+            setTimeout(() => setShowSuccess(false), 3000);
+            try { await axios.put('/gamification/streak'); } 
+            catch(_) {}
+          } catch (e) {
+            setSubmitResult({
+              success: false,
+              message: `❌ Your code has an error:\n${e.message}`,
             });
           }
-        } catch (_) {}
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Run tests with Pyodide
+        const results = [];
+        let allPassed = true;
+
+        for (let i = 0; i < testCases.length; i++) {
+          const tc = testCases[i];
+          try {
+            // Build test runner code
+            const funcName = challenge.functionName || 'solution';
+            const args = tc.args || [];
+            const expected = tc.expected;
+
+            // Serialize args for Python
+            const argsStr = args.map(a => {
+              if (typeof a === 'string') return `"${a}"`;
+              if (Array.isArray(a)) return JSON.stringify(a);
+              return String(a);
+            }).join(', ');
+
+            const testCode = `
+${code}
+
+# Test runner
+_result = ${funcName}(${argsStr})
+_expected = ${
+  typeof expected === 'string' 
+    ? `"${expected}"` 
+    : JSON.stringify(expected)
+}
+
+# Compare result
+if _result == _expected:
+    print("PASS")
+else:
+    print(f"FAIL: got {{repr(_result)}}, expected {{repr(_expected)}}")
+`;
+
+            const output = await runPython(testCode);
+            const passed = output.trim().startsWith('PASS');
+            
+            results.push({
+              passed,
+              description: tc.description || `Test ${i + 1}`,
+              output: output.trim(),
+            });
+            
+            if (!passed) allPassed = false;
+
+          } catch (e) {
+            results.push({
+              passed: false,
+              description: tc.description || `Test ${i + 1}`,
+              output: `Error: ${e.message}`,
+            });
+            allPassed = false;
+          }
+        }
+
+        if (allPassed) {
+          // All tests passed — record in backend for XP
+          try {
+            const res = await axios.post(
+              `/challenges/${challengeId}/submit`, { code }
+            );
+            const data = res.data;
+            setSubmitResult({
+              success: true,
+              allPassed: true,
+              message: `All ${results.length} test(s) passed!`,
+              xpAwarded: data.xpAwarded || challenge.xpReward || 10,
+              results,
+            });
+          } catch (_) {
+            // Backend failed but tests passed — still show success
+            setSubmitResult({
+              success: true,
+              allPassed: true,
+              message: `All ${results.length} test(s) passed!`,
+              xpAwarded: challenge.xpReward || 10,
+              results,
+            });
+          }
+          setShowSuccess(true);
+          setTimeout(() => setShowSuccess(false), 3000);
+          try { await axios.put('/gamification/streak'); } 
+          catch(_) {}
+
+          // Check if last challenge — unlock next level
+          try {
+            const isLast = currentIndex === allChallenges.length - 1;
+            if (isLast && challenge?.courseId && challenge?.levelNum) {
+              await axios.post('/gamification/level-up', {
+                courseId: challenge.courseId,
+                levelNum: challenge.levelNum,
+              });
+            }
+          } catch(_) {}
+
+        } else {
+          // Some tests failed — show which ones
+          const failedTests = results.filter(r => !r.passed);
+          const passedCount = results.filter(r => r.passed).length;
+          
+          setSubmitResult({
+            success: false,
+            allPassed: false,
+            message: `${passedCount}/${results.length} tests passed.`,
+            results,
+            failedDetails: failedTests.map(t => 
+              `• ${t.description}: ${t.output}`
+            ).join('\n'),
+          });
+        }
+
+      } else {
+        // ── JAVASCRIPT / HTML: use existing backend ───────
+        const res = await axios.post(
+          `/challenges/${challengeId}/submit`, { code }
+        );
+        const data = res.data;
+        const succeeded = data.success || data.allPassed || data.passed;
+        setSubmitResult(data);
+
+        if (succeeded) {
+          setShowSuccess(true);
+          setTimeout(() => setShowSuccess(false), 3000);
+          try { await axios.put('/gamification/streak'); } 
+          catch(_) {}
+          try {
+            const isLast = currentIndex === allChallenges.length - 1;
+            if (isLast && challenge?.courseId && challenge?.levelNum) {
+              await axios.post('/gamification/level-up', {
+                courseId: challenge.courseId,
+                levelNum: challenge.levelNum,
+              });
+            }
+          } catch(_) {}
+        }
       }
+
     } catch (err) {
       setSubmitResult({
         success: false,
-        message:
-          err.response?.data?.message || 'Submission failed.',
+        message: err.response?.data?.message || 
+                 'Submission failed. Please try again.',
       });
     } finally {
       setIsSubmitting(false);
@@ -330,7 +571,17 @@ const ChallengePage = () => {
     navigator.clipboard.writeText(code).catch(() => {});
   };
 
-  const lang = challenge?.language?.toLowerCase() || 'javascript';
+  const lang = (() => {
+    const challengeLang = challenge?.language?.toLowerCase();
+    const courseLang = course?.language?.toLowerCase();
+    // If challenge has a real language set, use it
+    // Otherwise fall back to course language
+    if (challengeLang && challengeLang !== 'javascript') {
+      return challengeLang;
+    }
+    if (courseLang) return courseLang;
+    return challengeLang || 'javascript';
+  })();
   const langMeta = getLangMeta(lang);
   const totalExercises = allChallenges.length;
   const exerciseNum = currentIndex + 1;
@@ -580,27 +831,49 @@ const ChallengePage = () => {
               {submitResult && (
                 <div
                   className={`rounded-lg p-4 mb-4 text-sm font-mono border ${
-                    submitResult.success || submitResult.allPassed || submitResult.passed
+                    submitResult.success || submitResult.allPassed
                       ? 'border-green-600/40 text-green-300'
                       : 'border-red-600/40 text-red-300'
                   }`}
                   style={{
                     backgroundColor:
-                      submitResult.success || submitResult.allPassed || submitResult.passed
+                      submitResult.success || submitResult.allPassed
                         ? 'rgba(74,222,128,0.08)'
                         : 'rgba(239,68,68,0.08)',
                   }}
                 >
                   <p className="font-bold mb-1">
-                    {submitResult.success || submitResult.allPassed || submitResult.passed
+                    {submitResult.success || submitResult.allPassed
                       ? '✅ All tests passed!'
-                      : '❌ Some tests failed'}
+                      : '❌ Tests failed'}
                   </p>
                   {submitResult.message && (
-                    <p className="text-xs opacity-80">{submitResult.message}</p>
+                    <p className="text-xs opacity-90 mb-1">
+                      {submitResult.message}
+                    </p>
                   )}
-                  {submitResult.xpAwarded > 0 && (
-                    <p className="text-yellow-400 mt-1">
+                  {submitResult.failedDetails && (
+                    <pre className="text-xs opacity-80 mt-2 
+                                    whitespace-pre-wrap text-red-300">
+                      {submitResult.failedDetails}
+                    </pre>
+                  )}
+                  {submitResult.results && (
+                    <div className="mt-2 space-y-1">
+                      {submitResult.results.map((r, i) => (
+                        <div key={i} className="flex items-center gap-2 
+                                                text-xs">
+                          <span>{r.passed ? '✅' : '❌'}</span>
+                          <span className={r.passed 
+                            ? 'text-green-400' : 'text-red-400'}>
+                            {r.description}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {(submitResult.xpAwarded > 0) && (
+                    <p className="text-yellow-400 mt-2 font-bold">
                       +{submitResult.xpAwarded} XP earned! ⚡
                     </p>
                   )}
@@ -738,17 +1011,25 @@ const ChallengePage = () => {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleRun}
-                disabled={isRunning}
+                disabled={isRunning || 
+                  (lang === 'python' && !pyodideReady)}
                 className="flex items-center gap-2 px-4 py-1.5 text-sm 
                            font-mono font-bold rounded-lg border 
                            border-white/20 hover:bg-white/10 transition
                            disabled:opacity-50 disabled:cursor-not-allowed"
+                title={
+                  lang === 'python' && !pyodideReady
+                    ? 'Python runtime is loading, please wait...'
+                    : ''
+                }
               >
-                {isRunning ? (
-                  <>⏳ Running...</>
-                ) : (
-                  <>▶ Run</>
-                )}
+                {isRunning
+                  ? <>⏳ Running...</>
+                  : lang === 'python' && pyodideLoading
+                  ? <>⏳ Loading Python...</>
+                  : lang === 'python' && !pyodideReady
+                  ? <>⏳ Loading Python...</>
+                  : <>▶ Run</>}
               </button>
 
               <button
