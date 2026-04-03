@@ -68,7 +68,6 @@ const LevelPage = () => {
 
     const fetchData = async () => {
       try {
-        setLoading(true);
         setError(null);
         
         console.log('[LevelPage] Fetching course:', courseId);
@@ -545,6 +544,7 @@ const LevelPage = () => {
               );
             })}
           </div>
+
         </div>
 
         {/* ── RIGHT SIDEBAR ── */}

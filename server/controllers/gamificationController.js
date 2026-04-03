@@ -448,14 +448,16 @@ const getCourseProgress = async (req, res) => {
 const updateCourseProgress = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const { currentLevel, completionPercentage, status, theoryCompleted, action } = req.body;
+    const { currentLevel, completionPercentage, status, theoryCompleted, action, lastAccessedChallengeId, lastAccessedLevel } = req.body;
     const userId = req.user._id;
 
     let updateData = {
       lastAccessedAt: new Date(),
       ...(currentLevel && { currentLevel }),
       ...(typeof completionPercentage === 'number' && { completionPercentage }),
-      ...(status && { status })
+      ...(status && { status }),
+      ...(lastAccessedChallengeId && { lastAccessedChallengeId }),
+      ...(lastAccessedLevel && { lastAccessedLevel })
     };
 
     // Handle theory completion

@@ -20,17 +20,17 @@ import CodeBattlePage from './pages/CodeBattlePage';
 import AchievementsPage from './pages/AchievementsPage';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
+import ProjectBuilder from './pages/ProjectBuilder';
+import ThirtyNitesOfCodingPage from './pages/ThirtyNitesOfCodingPage';
 import CommunityPage from './pages/CommunityPage';
-import BuildWorkspace from './pages/BuildWorkspace';
+import BuildPage from './pages/BuildPage';
 
 const AppLayout = () => {
   const location = useLocation();
   const { user } = useAuth();
 
   const hideNavbarPaths = ['/', '/login', '/signup'];
-  // Also hide navbar for build workspace (full-screen editor)
-  const isBuildPage = location.pathname.endsWith('/build');
-  const showNavbar = user && !hideNavbarPaths.includes(location.pathname) && !isBuildPage;
+  const showNavbar = user && !hideNavbarPaths.includes(location.pathname);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -58,7 +58,10 @@ const AppLayout = () => {
             <Route path="/achievements" element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
             <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
             <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />
-            <Route path="/projects/:id/build" element={<ProtectedRoute><BuildWorkspace /></ProtectedRoute>} />
+            <Route path="/projects/:id/build" element={<ProtectedRoute><ProjectBuilder /></ProtectedRoute>} />
+            <Route path="/30nitesofcoding" element={<ProtectedRoute><ThirtyNitesOfCodingPage /></ProtectedRoute>} />
+            <Route path="/30nitesofcoding/:day" element={<ProtectedRoute><ThirtyNitesOfCodingPage /></ProtectedRoute>} />
+            <Route path="/build" element={<ProtectedRoute><BuildPage /></ProtectedRoute>} />
             <Route path="/community" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
 
             <Route path="*" element={<Navigate to="/" replace />} />

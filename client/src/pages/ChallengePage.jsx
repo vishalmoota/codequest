@@ -35,86 +35,20 @@ const LANG_META = {
 const getLangMeta = (lang) =>
   LANG_META[lang?.toLowerCase()] || LANG_META.javascript;
 
-// Module-level singleton — shared across all renders
+// Module-level Pyodide (no longer used for Python tests - moved to backend)
 let _pyodideInstance = null;
 let _pyodideLoadPromise = null;
 
+// Deprecated: Pyodide loader - kept for potential future use
 const loadPyodide = () => {
-  // Return existing instance immediately
-  if (_pyodideInstance) {
-    return Promise.resolve(_pyodideInstance);
-  }
-  // Return existing promise if already loading
-  if (_pyodideLoadPromise) {
-    return _pyodideLoadPromise;
-  }
-  // Start loading
-  _pyodideLoadPromise = new Promise((resolve, reject) => {
-    // Check if already loaded in window
-    if (window.pyodide) {
-      _pyodideInstance = window.pyodide;
-      return resolve(_pyodideInstance);
-    }
-    
-    const existingScript = document.querySelector(
-      'script[src*="pyodide"]'
-    );
-    
-    const onLoad = async () => {
-      try {
-        const py = await window.loadPyodide({
-          indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/',
-        });
-        _pyodideInstance = py;
-        window.pyodide = py; // Cache on window too
-        resolve(py);
-      } catch (e) {
-        _pyodideLoadPromise = null; // Allow retry
-        reject(e);
-      }
-    };
-
-    if (existingScript) {
-      if (window.loadPyodide) {
-        onLoad();
-      } else {
-        existingScript.addEventListener('load', onLoad);
-      }
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 
-      'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js';
-    script.onload = onLoad;
-    script.onerror = (e) => {
-      _pyodideLoadPromise = null;
-      reject(new Error('Failed to load Pyodide script'));
-    };
-    document.head.appendChild(script);
-  });
-
-  return _pyodideLoadPromise;
+  console.warn('Pyodide loading deprecated - using backend Python execution');
+  return Promise.reject(new Error('Backend Python execution should be used instead'));
 };
 
 
 const runPython = async (code) => {
-  const py = await loadPyodide();
-  try {
-    py.runPython(`
-import sys
-import io
-sys.stdout = io.StringIO()
-`);
-    py.runPython(code);
-    const output = py.runPython('sys.stdout.getvalue()');
-    return output || '(no output)';
-  } catch (e) {
-    const msg = e.message || String(e);
-    const lines = msg.split('\n');
-    const errorLine = lines.filter(l => l.trim()).pop() || msg;
-    throw new Error(errorLine);
-  }
+  // This is now deprecated - Python execution moved to backend
+  throw new Error('Use backend Python execution instead');
 };
 
 // ── JavaScript runner ─────────────────────────────────────────────────────────
@@ -136,6 +70,37 @@ const runJavaScript = (code) => {
   } catch (e) {
     throw new Error(e.message);
   }
+};
+
+// ── Convert JS value to Python literal syntax ──────────────────────────────────
+const toPythonLiteral = (value) => {
+  if (typeof value === 'string') return `"${value}"`;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (value === null) return 'None';
+  if (Array.isArray(value)) {
+    const items = value.map(item => {
+      if (typeof item === 'object' && item !== null && !Array.isArray(item)) {
+        // Nested object in array - recursively convert
+        return '{' + Object.entries(item).map(([k, v]) => {
+          const key = `'${k}'`;
+          const val = toPythonLiteral(v);
+          return `${key}: ${val}`;
+        }).join(', ') + '}';
+      }
+      return toPythonLiteral(item);
+    }).join(', ');
+    return `[${items}]`;
+  }
+  if (typeof value === 'object' && value !== null) {
+    // Object / dictionary - recursively convert values
+    const items = Object.entries(value).map(([k, v]) => {
+      const key = `'${k}'`;
+      const val = toPythonLiteral(v);
+      return `${key}: ${val}`;
+    }).join(', ');
+    return `{${items}}`;
+  }
+  return String(value);
 };
 
 // ── Main Component ────────────────────────────────────────────────────────────
@@ -191,6 +156,13 @@ const ChallengePage = () => {
           try {
             const courseRes = await axios.get(`/courses/${ch.courseId}`);
             setCourse(courseRes.data);
+            
+            // Track that user accessed this challenge
+            await axios.put(`/gamification/course-progress/${ch.courseId}`, {
+              lastAccessedChallengeId: ch._id,
+              lastAccessedLevel: ch.levelNum,
+              lastAccessedAt: new Date(),
+            }).catch(() => {}); // Non-blocking
           } catch (_) {}
         }
 
@@ -209,16 +181,7 @@ const ChallengePage = () => {
           } catch (_) {}
         }
 
-        // Pre-load Pyodide for Python
-        if (ch.language === 'python') {
-          setPyodideLoading(true);
-          loadPyodide()
-            .then(() => {
-              setPyodideReady(true);
-              setPyodideLoading(false);
-            })
-            .catch(() => setPyodideLoading(false));
-        }
+        // No need to pre-load Pyodide - Python runs on backend now
       } catch (err) {
         setError('Failed to load challenge. Please try again.');
       } finally {
@@ -237,21 +200,26 @@ const ChallengePage = () => {
     setSubmitResult(null);
 
     try {
-      const courseLang = challenge?.language?.toLowerCase() || 
-                         'javascript';
+      const courseLang = challenge?.language?.toLowerCase() || 'javascript';
 
       if (courseLang === 'python') {
-        if (!pyodideReady) {
-          setOutput(
-            '⏳ Python runtime is loading...\n\nPlease wait ' +
-            '10-15 seconds for Pyodide to initialize, ' +
-            'then click Run again.'
-          );
-          setIsRunning(false);
-          return;
+        // Use backend for Python execution
+        try {
+          const res = await axios.post(`/challenges/${challengeId}/run-python`, { code });
+          const result = res.data;
+          
+          if (result.results && result.results.length > 0) {
+            // Show test results
+            const output = result.results
+              .map(r => `${r.passed ? '✅' : '❌'} ${r.description}: ${r.output}`)
+              .join('\n');
+            setOutput(output);
+          } else {
+            setOutput(result.message || '(no output)');
+          }
+        } catch (e) {
+          setOutput(`❌ Error:\n${e.response?.data?.message || e.message}`);
         }
-        const result = await runPython(code);
-        setOutput(result);
       } else if (courseLang === 'html') {
         if (iframeRef.current) {
           iframeRef.current.srcdoc = code;
@@ -266,7 +234,7 @@ const ChallengePage = () => {
     } finally {
       setIsRunning(false);
     }
-  }, [code, challenge, pyodideReady]);
+  }, [code, challenge, challengeId]);
 
   // ── Submit solution ─────────────────────────────────────────────────────────
   const handleSubmit = async () => {
@@ -317,160 +285,70 @@ const ChallengePage = () => {
     setSubmitResult(null);
 
     try {
-      // ── PYTHON: test locally with Pyodide ─────────────
+      // ── PYTHON: test with backend ─────────────
       if (courseLang === 'python') {
-        if (!pyodideReady) {
-          setSubmitResult({
-            success: false,
-            message: '⏳ Python runtime is still loading. Please wait and try again.',
-          });
-          setIsSubmitting(false);
-          return;
-        }
+        try {
+          // Run Python tests via backend
+          const testRes = await axios.post(`/challenges/${challengeId}/run-python`, { code });
+          const testData = testRes.data;
+          const results = testData.results || [];
+          const allPassed = testData.allPassed;
 
-        // Run each test case using Pyodide
-        const testCases = challenge.testCases || [];
-        
-        if (testCases.length === 0) {
-          // No test cases — just check code runs without error
-          try {
-            await runPython(code + '\n');
-            // Code runs OK — send to backend to record XP
-            const res = await axios.post(
-              `/challenges/${challengeId}/submit`, { code }
-            );
-            const data = res.data;
-            setSubmitResult({
-              success: true,
-              allPassed: true,
-              message: 'Code runs without errors!',
-              xpAwarded: data.xpAwarded || challenge.xpReward || 10,
-            });
-            setShowSuccess(true);
-            setTimeout(() => setShowSuccess(false), 3000);
-            try { await axios.put('/gamification/streak'); } 
-            catch(_) {}
-          } catch (e) {
-            setSubmitResult({
-              success: false,
-              message: `❌ Your code has an error:\n${e.message}`,
-            });
-          }
-          setIsSubmitting(false);
-          return;
-        }
-
-        // Run tests with Pyodide
-        const results = [];
-        let allPassed = true;
-
-        for (let i = 0; i < testCases.length; i++) {
-          const tc = testCases[i];
-          try {
-            // Build test runner code
-            const funcName = challenge.functionName || 'solution';
-            const args = tc.args || [];
-            const expected = tc.expected;
-
-            // Serialize args for Python
-            const argsStr = args.map(a => {
-              if (typeof a === 'string') return `"${a}"`;
-              if (Array.isArray(a)) return JSON.stringify(a);
-              return String(a);
-            }).join(', ');
-
-            const testCode = `
-${code}
-
-# Test runner
-_result = ${funcName}(${argsStr})
-_expected = ${
-  typeof expected === 'string' 
-    ? `"${expected}"` 
-    : JSON.stringify(expected)
-}
-
-# Compare result
-if _result == _expected:
-    print("PASS")
-else:
-    print(f"FAIL: got {{repr(_result)}}, expected {{repr(_expected)}}")
-`;
-
-            const output = await runPython(testCode);
-            const passed = output.trim().startsWith('PASS');
-            
-            results.push({
-              passed,
-              description: tc.description || `Test ${i + 1}`,
-              output: output.trim(),
-            });
-            
-            if (!passed) allPassed = false;
-
-          } catch (e) {
-            results.push({
-              passed: false,
-              description: tc.description || `Test ${i + 1}`,
-              output: `Error: ${e.message}`,
-            });
-            allPassed = false;
-          }
-        }
-
-        if (allPassed) {
-          // All tests passed — record in backend for XP
-          try {
-            const res = await axios.post(
-              `/challenges/${challengeId}/submit`, { code }
-            );
-            const data = res.data;
-            setSubmitResult({
-              success: true,
-              allPassed: true,
-              message: `All ${results.length} test(s) passed!`,
-              xpAwarded: data.xpAwarded || challenge.xpReward || 10,
-              results,
-            });
-          } catch (_) {
-            // Backend failed but tests passed — still show success
-            setSubmitResult({
-              success: true,
-              allPassed: true,
-              message: `All ${results.length} test(s) passed!`,
-              xpAwarded: challenge.xpReward || 10,
-              results,
-            });
-          }
-          setShowSuccess(true);
-          setTimeout(() => setShowSuccess(false), 3000);
-          try { await axios.put('/gamification/streak'); } 
-          catch(_) {}
-
-          // Check if last challenge — unlock next level
-          try {
-            const isLast = currentIndex === allChallenges.length - 1;
-            if (isLast && challenge?.courseId && challenge?.levelNum) {
-              await axios.post('/gamification/level-up', {
-                courseId: challenge.courseId,
-                levelNum: challenge.levelNum,
+          if (allPassed) {
+            // All tests passed — record in backend for XP
+            try {
+              const res = await axios.post(
+                `/challenges/${challengeId}/submit`, { code }
+              );
+              const data = res.data;
+              setSubmitResult({
+                success: true,
+                allPassed: true,
+                message: `All ${results.length} test(s) passed!`,
+                xpAwarded: data.xpAwarded || challenge.xpReward || 10,
+                results,
+              });
+              setShowSuccess(true);
+              setTimeout(() => setShowSuccess(false), 3000);
+              try { await axios.put('/gamification/streak'); } catch(_) {}
+              try {
+                const isLast = currentIndex === allChallenges.length - 1;
+                if (isLast && challenge?.courseId && challenge?.levelNum) {
+                  await axios.post('/gamification/level-up', {
+                    courseId: challenge.courseId,
+                    levelNum: challenge.levelNum,
+                  });
+                }
+              } catch(_) {}
+            } catch (err) {
+              // Backend failed but tests passed — still show success
+              setSubmitResult({
+                success: true,
+                allPassed: true,
+                message: `All ${results.length} test(s) passed!`,
+                xpAwarded: challenge.xpReward || 10,
+                results,
               });
             }
-          } catch(_) {}
-
-        } else {
-          // Some tests failed — show which ones
-          const failedTests = results.filter(r => !r.passed);
-          const passedCount = results.filter(r => r.passed).length;
-          
+          } else {
+            // Some tests failed
+            const failedTests = results.filter(r => !r.passed);
+            const passedCount = results.filter(r => r.passed).length;
+            
+            setSubmitResult({
+              success: false,
+              allPassed: false,
+              message: `${passedCount}/${results.length} tests passed.`,
+              results,
+              failedDetails: failedTests.map(t => 
+                `• ${t.description}: ${t.output}`
+              ).join('\n'),
+            });
+          }
+        } catch (err) {
           setSubmitResult({
             success: false,
-            allPassed: false,
-            message: `${passedCount}/${results.length} tests passed.`,
-            results,
-            failedDetails: failedTests.map(t => 
-              `• ${t.description}: ${t.output}`
-            ).join('\n'),
+            message: `❌ Error running Python tests:\n${err.response?.data?.message || err.message}`,
           });
         }
 
@@ -670,16 +548,10 @@ else:
           {lang === 'python' && (
             <span className="text-xs font-mono px-2 py-1 rounded"
                   style={{
-                    backgroundColor: pyodideReady
-                      ? 'rgba(74,222,128,0.15)'
-                      : 'rgba(251,191,36,0.15)',
-                    color: pyodideReady ? '#4ade80' : '#fbbf24',
+                    backgroundColor: 'rgba(74,222,128,0.15)',
+                    color: '#4ade80',
                   }}>
-              {pyodideReady
-                ? '● Python Ready'
-                : pyodideLoading
-                ? '⏳ Loading Python...'
-                : '● Python'}
+              ● Python Ready
             </span>
           )}
           <span
@@ -1025,10 +897,6 @@ else:
               >
                 {isRunning
                   ? <>⏳ Running...</>
-                  : lang === 'python' && pyodideLoading
-                  ? <>⏳ Loading Python...</>
-                  : lang === 'python' && !pyodideReady
-                  ? <>⏳ Loading Python...</>
                   : <>▶ Run</>}
               </button>
 

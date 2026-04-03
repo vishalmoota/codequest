@@ -1411,9 +1411,9 @@ const pythonChallenges = [
   // Level 4
   { levelNum:4, order:0, title:'Dict Items',       functionName:'entries',      difficulty:medium, xpReward:30, tags:['objects','python'],
     description:'Python: `dict.items()`. Return a list of [key, value] pairs from the dictionary.',
-    starterCode:'def entries(d):\n    # Return list of [key, value] pairs\n    pass',
+    starterCode:'def entries(d):\n    # Return list of [key, value] pairs (use list comprehension)\n    # Pattern: [[k, v] for k, v in d.items()]\n    pass',
     storyContext:'The merchant wants an itemized receipt — list each property.',
-    hints:['Use dict.items() to get key-value pairs, convert to list of lists.'],
+    hints:['Use dict.items() to get key-value pairs, convert to list of lists using list comprehension.'],
     testCases:[{args:[{a:1,b:2}],expected:[['a',1],['b',2]],description:'entries'}] },
   { levelNum:4, order:1, title:'Word Counter',         functionName:'wordCount',    difficulty:hard, xpReward:35, tags:['objects','strings','python'],
     description:'Count occurrences of each word (lowercase) in a string. Return a dictionary.',

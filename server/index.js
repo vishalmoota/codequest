@@ -16,7 +16,7 @@ const io = new Server(server, {
   transports: ['websocket', 'polling']
 });
 
-connectDB();
+// Initialize app middleware before connecting to DB
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 app.use(express.json());
 app.use(morgan('dev'));
@@ -32,6 +32,10 @@ app.use('/api/profile',      require('./routes/profile'));
 app.use('/api/gamification', require('./routes/gamification'));
 app.use('/api/narrative',    require('./routes/narrative'));
 app.use('/api/projects',     require('./routes/projects'));
+app.use('/api/user-projects', require('./routes/userProjects'));
+app.use('/api/project-progress', require('./routes/projectProgress'));
+app.use('/api/nites-of-coding', require('./routes/nitesOfCoding'));
+app.use('/api/run-code',     require('./routes/runCode'));
 app.use('/api/comments',     require('./routes/comments'));
 app.use('/api/community',    require('./routes/community'));
 app.use('/api/chat',         require('./routes/chat'));
@@ -199,8 +203,22 @@ io.on('connection', (socket) => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // START SERVER
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`🚀 CodeQuest server running on port ${PORT}`);
-  console.log(`📡 Socket.io ready for real-time communication`);
-});
+const startServer = async () => {
+  try {
+    // Connect to database first
+    await connectDB();
+    console.log('✅ Database connected successfully');
+
+    // Then start the server
+    const PORT = process.env.PORT || 5000;
+    server.listen(PORT, () => {
+      console.log(`🚀 CodeQuest server running on port ${PORT}`);
+      console.log(`📡 Socket.io ready for real-time communication`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error.message);
+    process.exit(1);
+  }
+};
+
+startServer();

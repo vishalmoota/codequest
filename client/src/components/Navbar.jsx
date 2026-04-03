@@ -38,6 +38,7 @@ const Navbar = () => {
       { to: '/battle', label: 'Code Battle Arena', icon: Swords, emoji: '⚔️' },
       { to: '/achievements', label: 'Achievements', icon: Award, emoji: '🏆' },
       { to: '/community', label: 'Community Chat', icon: Users, emoji: '💬' },
+      { to: '/30nitesofcoding', label: '#30nitesofcoding', icon: Code2, emoji: '📅' },
     ],
   };
 
@@ -102,9 +103,9 @@ const Navbar = () => {
                 </Link>
 
                 <Link
-                  to="/projects"
+                  to="/build"
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all
-                    ${isActive('/projects') ? 'text-yellow-300 bg-yellow-600/10' : 'text-slate-300 hover:text-white hover:bg-dark-500/50'}`}
+                    ${isActive('/build') ? 'text-yellow-300 bg-yellow-600/10' : 'text-slate-300 hover:text-white hover:bg-dark-500/50'}`}
                 >
                   <Hammer size={14} /> Build
                 </Link>

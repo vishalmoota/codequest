@@ -30,6 +30,10 @@ const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [activityHistory, setActivityHistory] = useState({
+    challenges: [],
+    projects: [],
+  });
 
   useEffect(() => {
     api.get('/profile').then(r => {
@@ -37,6 +41,28 @@ const ProfilePage = () => {
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        // Fetch completed challenges with XP
+        const progressRes = await api.get(
+          '/challenges/progress/all'
+        ).catch(() => ({ data: [] }));
+        
+        // Fetch user projects
+        const projectsRes = await api.get(
+          '/user-projects'
+        ).catch(() => ({ data: [] }));
+        
+        setActivityHistory({
+          challenges: progressRes.data || [],
+          projects: projectsRes.data || [],
+        });
+      } catch (_) {}
+    };
+    if (user) fetchHistory();
+  }, [user]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -284,6 +310,147 @@ const ProfilePage = () => {
           </div>
         </div>
       )}
+
+      {/* ── Activity History ── */}
+      <div className="mt-8 rounded-xl border border-white/10 p-6"
+           style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}>
+        <h2 className="text-xl font-bold font-mono mb-1">
+          📋 Activity History
+        </h2>
+        <p className="text-sm text-gray-500 mb-5">
+          All your completed courses, challenges, and projects
+        </p>
+
+        {/* Projects history */}
+        {activityHistory.projects.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-sm font-mono font-bold text-purple-400
+                           uppercase tracking-widest mb-3">
+              🔨 Projects Built
+            </h3>
+            <div className="space-y-2">
+              {activityHistory.projects.map(project => (
+                <div key={project._id}
+                     className="flex items-center justify-between
+                                px-4 py-3 rounded-lg border
+                                border-white/8"
+                     style={{
+                       backgroundColor: 'rgba(255,255,255,0.03)'
+                     }}>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">
+                      {project.language === 'python' ? '🐍' : '⚡'}
+                    </span>
+                    <div>
+                      <p className="text-sm font-mono text-white">
+                        {project.title}
+                      </p>
+                      <p className="text-xs text-gray-500 font-mono">
+                        {project.language} • {project.runCount} runs •{' '}
+                        {new Date(project.createdAt)
+                          .toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {project.xpAwarded && (
+                      <span className="text-xs font-mono font-bold
+                                       text-yellow-400">
+                        +25 XP ⚡
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Challenges history */}
+        <div className="mb-6">
+          <h3 className="text-sm font-mono font-bold text-green-400
+                         uppercase tracking-widest mb-3">
+            ⚔️ Challenges Completed
+          </h3>
+          {activityHistory.challenges.length === 0 ? (
+            <p className="text-gray-600 text-sm font-mono">
+              No challenges completed yet. Start learning!
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {activityHistory.challenges
+                .slice(0, 20)
+                .map((item, idx) => (
+                <div key={idx}
+                     className="flex items-center justify-between
+                                px-4 py-3 rounded-lg border
+                                border-white/8"
+                     style={{
+                       backgroundColor: 'rgba(255,255,255,0.03)'
+                     }}>
+                  <div className="flex items-center gap-3">
+                    <span className="text-green-400 text-sm">✅</span>
+                    <div>
+                      <p className="text-sm font-mono text-white">
+                        {item.challengeId?.title ||
+                         item.title ||
+                         'Challenge Completed'}
+                      </p>
+                      <p className="text-xs text-gray-500 font-mono">
+                        {item.challengeId?.courseId?.title ||
+                         'Course'} •{' '}
+                        {item.completedAt
+                          ? new Date(item.completedAt)
+                              .toLocaleDateString()
+                          : ''}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-mono font-bold
+                                   text-yellow-400">
+                    +{item.challengeId?.xpReward ||
+                      item.xpReward || 10} XP ⚡
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Summary stats */}
+        <div className="grid grid-cols-3 gap-3 pt-4 border-t
+                        border-white/8">
+          <div className="text-center">
+            <p className="text-xl font-bold text-green-400">
+              {activityHistory.challenges.length}
+            </p>
+            <p className="text-xs text-gray-500 font-mono mt-1">
+              Challenges Done
+            </p>
+          </div>
+          <div className="text-center border-x border-white/8">
+            <p className="text-xl font-bold text-purple-400">
+              {activityHistory.projects.length}
+            </p>
+            <p className="text-xs text-gray-500 font-mono mt-1">
+              Projects Built
+            </p>
+          </div>
+          <div className="text-center">
+            <p className="text-xl font-bold text-yellow-400">
+              {activityHistory.challenges.reduce(
+                (s, c) => s + (c.challengeId?.xpReward ||
+                               c.xpReward || 10), 0
+              ) + activityHistory.projects.filter(
+                p => p.xpAwarded
+              ).length * 25}
+            </p>
+            <p className="text-xs text-gray-500 font-mono mt-1">
+              Total XP Earned
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

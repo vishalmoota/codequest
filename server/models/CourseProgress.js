@@ -50,6 +50,13 @@ const courseProgressSchema = new mongoose.Schema({
     default: 'in-progress'
   },
   notes: String,
+  lastAccessedChallengeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Challenge'
+  },
+  lastAccessedLevel: {
+    type: Number
+  },
 }, {
   timestamps: true
 });

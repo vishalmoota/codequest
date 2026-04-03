@@ -51,6 +51,7 @@ const DashboardPage = () => {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [levelProgress, setLevelProgress] = useState({});
   const [courseProgressMap, setCourseProgressMap] = useState({}); // { courseId: { completed, total, pct } }
+  const [lastAccessedChallengeMap, setLastAccessedChallengeMap] = useState({}); // { courseId: { challengeId, level } }
   const [loading, setLoading] = useState(true);
   const [streakData, setStreakData] = useState({ streak: 0, maxStreak: 0 });
   const [activityDays, setActivityDays] = useState([]);
@@ -102,6 +103,21 @@ const DashboardPage = () => {
         progressMap[course._id] = { completed, total, pct: total > 0 ? Math.round(completed / total * 100) : 0 };
       }
       setCourseProgressMap(progressMap);
+
+      // Fetch last accessed challenge for each enrolled course
+      const lastAccessedMap = {};
+      for (const course of enrolled) {
+        try {
+          const userProgRes = await api.get(`/courses/${course._id}/user-progress`);
+          if (userProgRes.data.lastAccessedChallengeId) {
+            lastAccessedMap[course._id] = {
+              challengeId: userProgRes.data.lastAccessedChallengeId,
+              level: userProgRes.data.lastAccessedLevel || 1
+            };
+          }
+        } catch (e) { /* skip */ }
+      }
+      setLastAccessedChallengeMap(lastAccessedMap);
 
       // Build level progress for selected course
       if (detailCourse) {
@@ -374,10 +390,18 @@ const DashboardPage = () => {
 
                     <div className="flex items-center gap-3">
                       {levelProgress[1]?.completed > 0 || totalCompleted > 0
-                        ? <Link to={`/course/${selectedCourse._id}/level/${currentLevel}/theory`}
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-xl transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary-600/30">
-                            Continue Learning <ArrowRight size={16} />
-                          </Link>
+                        ? (() => {
+                            const lastAccessed = lastAccessedChallengeMap[selectedCourse._id];
+                            const linkTo = lastAccessed && lastAccessed.challengeId
+                              ? `/course/${selectedCourse._id}/level/${lastAccessed.level}/challenge/${lastAccessed.challengeId}`
+                              : `/course/${selectedCourse._id}/level/${currentLevel}/theory`;
+                            return (
+                              <Link to={linkTo}
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-xl transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary-600/30">
+                                Continue Learning <ArrowRight size={16} />
+                              </Link>
+                            );
+                          })()
                         : <Link to={`/course/${selectedCourse._id}`}
                             className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-xl transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary-600/30">
                             Start Course <ArrowRight size={16} />

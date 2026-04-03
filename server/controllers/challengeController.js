@@ -248,6 +248,8 @@ const submitChallenge = async (req, res) => {
           userId: req.user._id,
           courseId: challenge.courseId,
           lastAccessedAt: new Date(),
+          lastAccessedChallengeId: challenge._id,
+          lastAccessedLevel: challenge.levelNum,
           totalChallengesCompleted: completedInCourse,
           completionPercentage,
           currentLevel: newCurrentLevel,
@@ -266,6 +268,19 @@ const submitChallenge = async (req, res) => {
         { userId: req.user._id, challengeId: challenge._id },
         { submittedCode: code }
       );
+
+      // Still track that user accessed this challenge in CourseProgress
+      if (challenge.courseId) {
+        await CourseProgress.findOneAndUpdate(
+          { userId: req.user._id, courseId: challenge.courseId },
+          {
+            lastAccessedAt: new Date(),
+            lastAccessedChallengeId: challenge._id,
+            lastAccessedLevel: challenge.levelNum
+          },
+          { upsert: true }
+        );
+      }
     }
 
     // Calculate current streak for response
@@ -316,4 +331,53 @@ const submitChallenge = async (req, res) => {
   }
 };
 
-module.exports = { getChallenges, getChallenge, submitChallenge };
+// POST /api/challenges/:id/run-python
+// Run Python code with test cases (used by frontend for real-time testing)
+const runPythonTests = async (req, res) => {
+  try {
+    const { code } = req.body;
+    const challenge = await Challenge.findById(req.params.id);
+    if (!challenge) return res.status(404).json({ message: 'Challenge not found' });
+
+    // Check if this is a Python challenge
+    const course = challenge.courseId ? await Course.findById(challenge.courseId) : null;
+    const isPython = challenge.language === 'python' || (course && course.language === 'python');
+
+    if (!isPython) {
+      return res.status(400).json({ message: 'This is not a Python challenge' });
+    }
+
+    if (!code || code.trim() === '') {
+      return res.json({
+        success: false,
+        message: 'Please write your solution first.',
+        results: [],
+      });
+    }
+
+    // Import the Python executor
+    const { runPythonTests: runTests } = require('../utils/pythonExecutor');
+
+    // Run tests
+    const results = await runTests(code, challenge.functionName, challenge.testCases || []);
+    const allPassed = results.every(r => r.passed);
+
+    res.json({
+      success: allPassed,
+      allPassed,
+      results,
+      message: allPassed 
+        ? `All ${results.length} test(s) passed!`
+        : `${results.filter(r => r.passed).length}/${results.length} tests passed`,
+    });
+  } catch (err) {
+    console.error('Python test error:', err);
+    res.status(500).json({ 
+      success: false,
+      message: `Error running tests: ${err.message}`,
+      results: [],
+    });
+  }
+};
+
+module.exports = { getChallenges, getChallenge, submitChallenge, runPythonTests };
