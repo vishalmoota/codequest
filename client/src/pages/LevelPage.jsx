@@ -229,6 +229,62 @@ const LevelPage = () => {
     return colors[rank] || '#a78bfa';
   };
 
+  const downloadCertificate = () => {
+    if (!course) return;
+
+    const completedOn = new Date().toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    const learnerName = profile?.username || user?.username || 'CodeQuest Learner';
+    const safeTitle = course.title
+      .replace(/[^a-z0-9]+/gi, '-')
+      .replace(/^-+|-+$/g, '')
+      .toLowerCase();
+
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1000" viewBox="0 0 1400 1000">
+        <defs>
+          <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#050510" />
+            <stop offset="50%" stop-color="#0f172a" />
+            <stop offset="100%" stop-color="#120f24" />
+          </linearGradient>
+          <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#00f5ff" />
+            <stop offset="50%" stop-color="#7b2fff" />
+            <stop offset="100%" stop-color="#ffd700" />
+          </linearGradient>
+        </defs>
+        <rect width="1400" height="1000" rx="48" fill="url(#bg)" />
+        <rect x="40" y="40" width="1320" height="920" rx="36" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="4" />
+        <circle cx="290" cy="220" r="130" fill="rgba(0,245,255,0.10)" />
+        <circle cx="1120" cy="200" r="160" fill="rgba(123,47,255,0.12)" />
+        <circle cx="1090" cy="770" r="170" fill="rgba(255,215,0,0.08)" />
+        <text x="700" y="175" text-anchor="middle" fill="#ffd700" font-family="Orbitron, Arial, sans-serif" font-size="72" font-weight="900" letter-spacing="8">CODEQUEST</text>
+        <text x="700" y="255" text-anchor="middle" fill="#ffffff" font-family="Orbitron, Arial, sans-serif" font-size="44" font-weight="700" letter-spacing="4">COMPLETION CERTIFICATE</text>
+        <line x1="360" y1="320" x2="1040" y2="320" stroke="url(#accent)" stroke-width="6" stroke-linecap="round" />
+        <text x="700" y="430" text-anchor="middle" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="38" font-weight="700">Awarded to</text>
+        <text x="700" y="520" text-anchor="middle" fill="#00f5ff" font-family="Orbitron, Arial, sans-serif" font-size="56" font-weight="900">${learnerName}</text>
+        <text x="700" y="605" text-anchor="middle" fill="#cbd5e1" font-family="Inter, Arial, sans-serif" font-size="28">for completing every theory chapter and challenge in</text>
+        <text x="700" y="665" text-anchor="middle" fill="#ffd700" font-family="Orbitron, Arial, sans-serif" font-size="42" font-weight="800">${course.title}</text>
+        <text x="700" y="770" text-anchor="middle" fill="#94a3b8" font-family="Inter, Arial, sans-serif" font-size="24">Completed on ${completedOn}</text>
+        <text x="700" y="825" text-anchor="middle" fill="#64748b" font-family="Inter, Arial, sans-serif" font-size="20">Download from the final certificate level in your course</text>
+      </svg>
+    `.trim();
+
+    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `${safeTitle}-certificate.svg`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
@@ -532,10 +588,32 @@ const LevelPage = () => {
                               </div>
                             );
                           })
-                        ) : theoryComplete && challenges.length === 0 ? (
-                          <p className="px-6 py-4 text-gray-500 text-sm font-mono">
-                            No challenges yet.
-                          </p>
+                        ) : (level.levelNum === levels.length && challenges.length === 0) || (theoryComplete && challenges.length === 0) ? (
+                          level.levelNum === levels.length ? (
+                            <div className="px-6 py-5">
+                              <div className="rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 via-white/[0.03] to-cyan-500/10 p-5">
+                                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                                  <div>
+                                    <p className="text-xs uppercase tracking-[0.35em] text-yellow-300/80">Course Complete</p>
+                                    <h4 className="mt-2 text-2xl font-black text-white">Completion Certificate</h4>
+                                    <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
+                                      You have finished every theory chapter and challenge in this course. Download your certificate to save or print your achievement.
+                                    </p>
+                                  </div>
+                                  <button
+                                    onClick={downloadCertificate}
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-yellow-400 px-5 py-3 text-sm font-black text-black transition-transform hover:scale-[1.02]"
+                                  >
+                                    <Award size={16} /> Download Certificate
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="px-6 py-4 text-gray-500 text-sm font-mono">
+                              No challenges yet.
+                            </p>
+                          )
                         ) : null}
                       </div>
                     </div>

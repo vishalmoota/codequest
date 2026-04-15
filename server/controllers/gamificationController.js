@@ -5,6 +5,8 @@ const Progress = require('../models/Progress');
 const CourseProgress = require('../models/CourseProgress');
 const Course = require('../models/Course');
 
+const CERTIFICATE_LEVEL = 6;
+
 // BADGES awarded after XP milestones or special actions
 const BADGES = [
   { id: 'first_blood',     label: '🩸 First Blood',       condition: (u) => true },   // first challenge
@@ -437,7 +439,13 @@ const getCourseProgress = async (req, res) => {
       return res.status(404).json({ message: 'Course progress not found' });
     }
 
-    res.json(courseProgress);
+    const response = courseProgress.toObject();
+    if ((response.completionPercentage || 0) >= 100) {
+      response.currentLevel = Math.max(response.currentLevel || 1, CERTIFICATE_LEVEL);
+      response.status = 'completed';
+    }
+
+    res.json(response);
   } catch (err) {
     console.error('Error fetching course progress:', err);
     res.status(500).json({ message: err.message });

@@ -8,6 +8,10 @@ const router = express.Router();
 const { protect: auth } = require('../middleware/auth');
 const ProjectProgress = require('../models/ProjectProgress');
 const User = require('../models/User');
+const {
+  createCommunityPost,
+  buildTutorialCompletionPost,
+} = require('../utils/communityPosts');
 
 const execFileAsync = promisify(execFile);
 
@@ -88,7 +92,7 @@ router.get('/', auth, async (req, res) => {
 // POST complete a step and award XP
 router.post('/:projectId/step', auth, async (req, res) => {
   try {
-    const { stepIndex, code, stepXp, totalSteps } = req.body;
+    const { stepIndex, code, stepXp, totalSteps, projectMeta } = req.body;
     const { projectId } = req.params;
 
     let progress = await ProjectProgress.findOne({
@@ -125,6 +129,8 @@ router.post('/:projectId/step', auth, async (req, res) => {
       });
     }
 
+    const wasCompleted = !!progress.completed;
+
     // Check if all steps completed
     if (
       progress.completedSteps.length >= totalSteps &&
@@ -136,6 +142,29 @@ router.post('/:projectId/step', auth, async (req, res) => {
 
     progress.updatedAt = new Date();
     await progress.save();
+
+    if (!wasCompleted && progress.completed) {
+      const author = await User.findById(req.user.id);
+      if (author) {
+        try {
+          const tutorialPost = buildTutorialCompletionPost({
+            studentName: author.username,
+            tutorial: projectMeta || { id: projectId },
+            levelCount: totalSteps,
+          });
+
+          await createCommunityPost({
+            sourceType: 'project-tutorial-completed',
+            sourceId: String(projectId),
+            author,
+            postData: tutorialPost,
+            sourceMeta: projectMeta || { id: projectId },
+          });
+        } catch (communityError) {
+          console.error('Failed to create tutorial completion post:', communityError);
+        }
+      }
+    }
 
     res.json({
       progress,

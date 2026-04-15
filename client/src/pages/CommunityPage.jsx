@@ -24,13 +24,15 @@ const NAV_ITEMS = [
   { id: 'chat',      label: 'Live Chat',       icon: MessageSquare },
   { id: 'leaderboard', label: 'Leaderboard',   icon: Trophy },
   { id: 'showcase',  label: 'Project Showcase', icon: Code2 },
+  { id: 'project-tutorials-completed', label: 'Project Tutorials Completed', icon: FileText },
+  { id: 'projects-built', label: 'Projects Built', icon: Code2 },
   { id: 'challenge', label: 'Monthly Challenge', icon: Star },
 ];
 
 const NEWS = [
   { emoji: '🚀', title: 'New AI Projects Added', date: 'Today', desc: 'Build your own chatbot & image classifier!' },
   { emoji: '🏆', title: 'Monthly Challenge is Live', date: 'Mar 2026', desc: 'Build a real-time dashboard and win XP prizes.' },
-  { emoji: '📚', title: 'Theory Revamp', date: 'This Week', desc: 'Levels 1-5 now have interactive quizzes.' },
+  { emoji: '📚', title: 'Theory Revamp', date: 'This Week', desc: 'Levels 1-6 now have interactive quizzes and a completion certificate.' },
 ];
 
 const EVENTS = [
@@ -504,6 +506,20 @@ const CommunityPage = () => {
           {activeNav === 'showcase' && (
             <div className="h-full px-5 py-4 overflow-auto">
               <CommunityForum activeChannel="general" />
+            </div>
+          )}
+
+          {/* Project Tutorials Completed */}
+          {activeNav === 'project-tutorials-completed' && (
+            <div className="h-full px-5 py-4 overflow-auto">
+              <CommunityForum activeChannel="project-tutorials-completed" />
+            </div>
+          )}
+
+          {/* Projects Built */}
+          {activeNav === 'projects-built' && (
+            <div className="h-full px-5 py-4 overflow-auto">
+              <CommunityForum activeChannel="projects-built" />
             </div>
           )}
 

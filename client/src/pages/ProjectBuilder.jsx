@@ -268,6 +268,16 @@ const ProjectBuilder = () => {
         code: stepCode,
         stepXp: currentStepData.xp,
         totalSteps,
+        projectMeta: {
+          id: project.id,
+          title: project.title,
+          description: project.description,
+          language: project.language,
+          difficulty: project.difficulty,
+          duration: project.duration,
+          tags: project.tags,
+          totalXp: project.totalXp,
+        },
       });
 
       const xpAwarded = response.data?.xpAwarded || 0;

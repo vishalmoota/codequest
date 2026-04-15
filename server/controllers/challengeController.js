@@ -4,6 +4,8 @@ const User = require('../models/User');
 const Course = require('../models/Course');
 const CourseProgress = require('../models/CourseProgress');
 
+const CERTIFICATE_LEVEL = 6;
+
 // Safely run user code against test cases in Node.js sandbox
 const runUserCode = (userCode, functionName, testCases, isHTML = false, isPython = false) => {
   const results = [];
@@ -210,7 +212,7 @@ const submitChallenge = async (req, res) => {
 
         // Update user's level if appropriate
         if (levelUnlocked > user.level) {
-          user.level = Math.min(levelUnlocked, 5);
+          user.level = Math.min(levelUnlocked, CERTIFICATE_LEVEL);
         }
       }
 

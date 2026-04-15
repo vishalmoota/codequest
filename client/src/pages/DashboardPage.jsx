@@ -15,13 +15,14 @@ import {
   Flame, Swords, BookOpen, Award, Star, TrendingUp, Users, ArrowRight, RefreshCw
 } from 'lucide-react';
 
-const LEVEL_ICONS = ['🌱', '🔀', '🔄', '⚙️', '📦'];
+const LEVEL_ICONS = ['🌱', '🔀', '🔄', '⚙️', '📦', '🏅'];
 const LEVEL_COLORS = [
   'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30 hover:border-emerald-400/50',
   'from-blue-500/20 to-blue-600/10 border-blue-500/30 hover:border-blue-400/50',
   'from-violet-500/20 to-violet-600/10 border-violet-500/30 hover:border-violet-400/50',
   'from-orange-500/20 to-orange-600/10 border-orange-500/30 hover:border-orange-400/50',
   'from-pink-500/20 to-pink-600/10 border-pink-500/30 hover:border-pink-400/50',
+  'from-yellow-500/20 to-yellow-600/10 border-yellow-500/30 hover:border-yellow-400/50',
 ];
 
 const MOTIVATIONAL_QUOTES = [
@@ -41,6 +42,7 @@ const STORY_INTROS = {
   3: { title: 'Chapter 3: The Depths', desc: 'Go deeper — tackle more complex concepts and challenges...', emoji: '🏰' },
   4: { title: 'Chapter 4: The Forge', desc: 'Master advanced techniques and sharpen your skills...', emoji: '📖' },
   5: { title: 'Chapter 5: The Summit', desc: 'The final ascent — prove your mastery with expert challenges...', emoji: '💎' },
+  6: { title: 'Completion Certificate', desc: 'Download your certificate and celebrate full course mastery.', emoji: '🏅' },
 };
 
 const DashboardPage = () => {

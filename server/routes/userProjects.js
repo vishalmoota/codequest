@@ -3,6 +3,10 @@ const router = express.Router();
 const { protect } = require('../middleware/auth');
 const UserProject = require('../models/UserProject');
 const User = require('../models/User');
+const {
+  createCommunityPost,
+  buildProjectBuiltPost,
+} = require('../utils/communityPosts');
 
 // GET all projects for logged in user
 router.get('/', protect, async (req, res) => {
@@ -86,6 +90,35 @@ router.put('/:id', protect, async (req, res) => {
       await User.findByIdAndUpdate(req.user.id, {
         $inc: { xp: 25 },
       });
+
+      const author = await User.findById(req.user.id);
+      if (author) {
+        try {
+          const builtPost = buildProjectBuiltPost({
+            studentName: author.username,
+            project: {
+              ...project.toObject(),
+              code: project.code,
+              lastOutput: lastOutput || '',
+              runCount: project.runCount + 1,
+            },
+          });
+
+          await createCommunityPost({
+            sourceType: 'project-built',
+            sourceId: String(project._id),
+            author,
+            postData: builtPost,
+            sourceMeta: {
+              projectId: String(project._id),
+              title: project.title,
+              language: project.language,
+            },
+          });
+        } catch (communityError) {
+          console.error('Failed to create project built post:', communityError);
+        }
+      }
     }
 
     project.updatedAt = Date.now();

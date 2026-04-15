@@ -13,8 +13,12 @@ const postSchema = new mongoose.Schema({
   commentCount:{ type: Number, default: 0 },
   pinned:      { type: Boolean, default: false },
   type:        { type: String, enum: ['question', 'showcase', 'discussion', 'meme'], default: 'discussion' },
+  sourceType:  { type: String, default: '' },
+  sourceId:    { type: String, default: '' },
+  sourceMeta:  { type: mongoose.Schema.Types.Mixed, default: {} },
 }, { timestamps: true });
 
 postSchema.index({ channel: 1, createdAt: -1 });
+postSchema.index({ sourceType: 1, sourceId: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('Post', postSchema);

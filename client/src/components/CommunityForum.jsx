@@ -10,6 +10,8 @@ const CHANNELS = [
   { id: 'python', label: 'Python', emoji: '🐍' },
   { id: 'react', label: 'React', emoji: '⚛️' },
   { id: 'project-help', label: 'Project Help', emoji: '🛠️' },
+  { id: 'project-tutorials-completed', label: 'Project Tutorials Completed', emoji: '🎓' },
+  { id: 'projects-built', label: 'Projects Built', emoji: '🧱' },
 ];
 
 const POST_TYPES = [
