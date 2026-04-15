@@ -1085,6 +1085,7 @@ const STYLES = `
     .home-page [id='hero'] {
       min-height: auto !important;
       padding-top: 1.5rem !important;
+      padding-bottom: 2rem !important;
     }
 
     .home-page [id='hero'] .hero-grid {
@@ -1103,6 +1104,17 @@ const STYLES = `
     .home-page .matrix-column,
     .home-page .home-scanline {
       display: none !important;
+    }
+
+    .home-page [id='hero'] .hero-mini-hud {
+      display: none !important;
+    }
+
+    .home-page [id='hero'] .hero-robot-stage {
+      top: 44% !important;
+      width: min(100vw, 360px) !important;
+      height: 300px !important;
+      transform: translate(-50%, -50%) scale(0.7) !important;
     }
 
     .home-page [id='hero'] .hero-progress-bar {
@@ -1157,6 +1169,13 @@ const STYLES = `
 
     .home-page [id='hero'] {
       padding: 1rem 0.75rem 2rem !important;
+    }
+
+    .home-page [id='hero'] .hero-robot-stage {
+      top: 42% !important;
+      width: min(100vw, 320px) !important;
+      height: 270px !important;
+      transform: translate(-50%, -50%) scale(0.62) !important;
     }
 
     .home-page [id='hero'] h1 {
@@ -1916,7 +1935,7 @@ export default function HomePage() {
             </div>
           ))}
 
-          <div style={{ position: 'absolute', inset: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translate(-50%, -50%)', left: '50%', top: '50%', pointerEvents: 'none', zIndex: 2 }}>
+          <div className="hero-robot-stage" style={{ position: 'absolute', inset: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translate(-50%, -50%)', left: '50%', top: '50%', pointerEvents: 'none', zIndex: 2 }}>
             <Robot />
           </div>
 
