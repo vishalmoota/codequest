@@ -549,6 +549,236 @@ body.home-page {
   .testimonial-card {
     width: 16rem;
   }
+
+  .home-page {
+    cursor: auto;
+  }
+
+  .home-cursor,
+  .home-cursor-ring {
+    display: none;
+  }
+
+  .home-page [id='hero'] {
+    min-height: auto !important;
+    padding: 4.5rem 1rem 3rem !important;
+  }
+
+  .home-page [id='hero'] h1 {
+    font-size: clamp(2.6rem, 12vw, 4.2rem) !important;
+    letter-spacing: 0.08em !important;
+  }
+
+  .home-page [id='hero'] .hero-mini-hud {
+    width: min(190px, calc(100vw - 2rem)) !important;
+    padding: 10px !important;
+  }
+
+  .home-page [id='hero'] .hero-chip,
+  .home-page [id='hero'] .game-chip {
+    font-size: 0.64rem !important;
+    padding: 0.4rem 0.7rem !important;
+  }
+
+  .home-page [id='hero'] > div:nth-child(4),
+  .home-page [id='hero'] > div:nth-child(5),
+  .home-page [id='hero'] > div:nth-child(6) {
+    display: none !important;
+  }
+
+  .home-page [id='hero'] .hero-progress-bar {
+    width: 100% !important;
+  }
+
+  .home-page [id='worlds'],
+  .home-page [id='progression'],
+  .home-page [id='courses'],
+  .home-page [id='challenges'],
+  .home-page [id='projects'],
+  .home-page [id='community'],
+  .home-page [id='nites'] {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .home-page [id='worlds'] > div,
+  .home-page [id='progression'] > div,
+  .home-page [id='courses'] > div,
+  .home-page [id='challenges'] > div,
+  .home-page [id='projects'] > div,
+  .home-page [id='nites'] > div,
+  .home-page footer > div {
+    grid-template-columns: 1fr !important;
+  }
+
+  .home-page [id='worlds'] .scene-card-3d,
+  .home-page [id='progression'] .hud-panel,
+  .home-page [id='projects'] .scene-card-3d,
+  .home-page [id='projects'] .quest-card,
+  .home-page [id='challenges'] .quest-card,
+  .home-page [id='nites'] .scene-card-3d,
+  .home-page footer .scene-card-3d {
+    transform: none !important;
+  }
+
+  .home-page [id='worlds'] .scene-card-3d {
+    min-height: auto !important;
+  }
+
+  .home-page [id='worlds'] .terminal-lines {
+    grid-template-columns: 24px 1fr !important;
+  }
+
+  .home-page [id='worlds'] .terminal-code {
+    font-size: 0.82rem !important;
+    line-height: 1.7 !important;
+  }
+
+  .home-page [id='worlds'] > div > div:last-child,
+  .home-page [id='progression'] > div:last-child,
+  .home-page [id='projects'] > div:last-child,
+  .home-page [id='nites'] > div:last-child {
+    margin-top: 1rem !important;
+  }
+
+  .home-page [id='worlds'] > div > div:last-child,
+  .home-page [id='projects'] > div:last-child {
+    grid-template-columns: 1fr !important;
+  }
+
+  .home-page [id='worlds'] .mode-card {
+    min-height: auto !important;
+  }
+
+  .home-page [id='progression'] .hud-panel,
+  .home-page [id='projects'] .quest-card,
+  .home-page [id='community'] .quest-card,
+  .home-page [id='nites'] .quest-card,
+  .home-page footer .scene-card-3d {
+    padding: 1rem !important;
+  }
+
+  .home-page [id='progression'] .progress-step {
+    min-height: auto !important;
+    padding-left: 2.7rem !important;
+  }
+
+  .home-page [id='progression'] .game-stats-card,
+  .home-page [id='community'] .game-stats-card {
+    min-height: 130px !important;
+  }
+
+  .home-page [id='courses'] .quest-card > div:last-child,
+  .home-page [id='projects'] .hero-mini-hud,
+  .home-page [id='projects'] .quest-card > div:last-child,
+  .home-page [id='nites'] .reward-card,
+  .home-page footer .reward-card {
+    font-size: 0.9rem !important;
+  }
+
+  .home-page [id='projects'] > div:nth-child(2),
+  .home-page [id='community'] > div:nth-child(2),
+  .home-page [id='nites'] > div:nth-child(2),
+  .home-page footer > div:nth-child(2) {
+    margin-top: 1rem !important;
+  }
+
+  .home-page [id='community'] .leader-row {
+    grid-template-columns: 22px 1fr auto !important;
+    font-size: 0.8rem !important;
+  }
+
+  .home-page [id='community'] .leader-row span:first-child {
+    display: none;
+  }
+
+  .home-page [id='community'] .leader-row {
+    padding-left: 0.9rem !important;
+    padding-right: 0.9rem !important;
+  }
+
+  .home-page [id='nites'] .scene-card-3d > div:first-child + div {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .home-page [id='nites'] .scene-card-3d > div:first-child + div > div {
+    aspect-ratio: 1 / 1 !important;
+  }
+
+  .home-page [id='nites'] .scene-card-3d > div:first-child {
+    flex-wrap: wrap !important;
+  }
+
+  .home-page .status-bar {
+    flex-wrap: wrap;
+    gap: 0.4rem 0.8rem;
+    height: auto;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .home-page .terminal-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .home-page .hero-progress-bar {
+    height: 8px;
+  }
+
+  .home-page footer .scene-card-3d > div:first-child {
+    flex-direction: column;
+  }
+
+  .home-page footer .scene-card-3d > div:nth-child(2) {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-page [id='hero'] {
+    padding-top: 4rem !important;
+  }
+
+  .home-page [id='hero'] .hero-aura,
+  .home-page [id='hero'] .home-orb,
+  .home-page [id='hero'] .home-scanline,
+  .home-page [id='hero'] .game-chip,
+  .home-page .hud-corner,
+  .home-page .matrix-column {
+    display: none !important;
+  }
+
+  .home-page [id='hero'] h1 {
+    font-size: clamp(2.2rem, 12vw, 3.4rem) !important;
+  }
+
+  .home-page [id='hero'] p,
+  .home-page [id='hero'] .typewriter {
+    font-size: 0.95rem !important;
+  }
+
+  .home-page [id='worlds'] .terminal-code {
+    font-size: 0.76rem !important;
+  }
+
+  .home-page [id='worlds'] .terminal-line-nums {
+    padding-left: 0.25rem !important;
+    font-size: 0.7rem !important;
+  }
+
+  .home-page [id='community'] .game-chip,
+  .home-page [id='nites'] .game-chip {
+    position: static !important;
+    margin-left: auto;
+  }
+
+  .home-page [id='nites'] .scene-card-3d > div:first-child + div {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .home-page footer .scene-card-3d > div:last-child {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 /* ── CodeQuest Homepage Variables ── */
