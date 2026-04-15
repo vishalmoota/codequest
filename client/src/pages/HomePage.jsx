@@ -906,6 +906,57 @@ const STYLES = `
     text-decoration: none;
   }
 
+  .mobile-menu-button {
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    background: rgba(8, 8, 30, 0.9);
+    color: #00ffff;
+    border-radius: 12px;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+    box-shadow: 0 0 18px rgba(0, 245, 255, 0.08);
+  }
+
+  .mobile-menu-button span {
+    width: 18px;
+    height: 2px;
+    border-radius: 999px;
+    background: #00ffff;
+    display: block;
+    box-shadow: 0 0 8px rgba(0, 245, 255, 0.45);
+  }
+
+  .home-mobile-menu {
+    display: none;
+  }
+
+  .home-mobile-menu-item {
+    width: 100%;
+    text-align: left;
+    padding: 0.9rem 1rem;
+    border-radius: 14px;
+    background: rgba(8, 8, 30, 0.88);
+    border: 1px solid rgba(0, 255, 255, 0.12);
+  }
+
+  .home-mobile-cta {
+    width: 100%;
+    border: 1px solid #00ffff;
+    border-radius: 14px;
+    background: rgba(0, 255, 255, 0.06);
+    color: #00ffff;
+    padding: 0.95rem 1rem;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+
   .hero-chip {
     position: absolute;
     padding: 0.65rem 0.95rem;
@@ -995,6 +1046,148 @@ const STYLES = `
 
   html {
     scroll-behavior: auto;
+  }
+
+  @media (max-width: 768px) {
+    .mobile-menu-button {
+      display: inline-flex;
+    }
+
+    .home-nav-links {
+      display: none !important;
+    }
+
+    .home-mobile-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      padding: 0 1rem 1rem;
+      margin-top: 0.5rem;
+      position: relative;
+      z-index: 51;
+    }
+
+    .home-nav-shell {
+      padding: 0.75rem 1rem;
+      align-items: center;
+    }
+
+    .brand-button span {
+      font-size: 0.95rem !important;
+    }
+
+    .brand-button .w-10,
+    .brand-button .h-10 {
+      width: 2rem !important;
+      height: 2rem !important;
+    }
+
+    .home-page [id='hero'] {
+      min-height: auto !important;
+      padding-top: 1.5rem !important;
+    }
+
+    .home-page [id='hero'] .hero-grid {
+      overflow: hidden;
+    }
+
+    .home-page [id='hero'] h1 {
+      font-size: clamp(2.2rem, 11vw, 4rem) !important;
+      letter-spacing: 0.04em !important;
+    }
+
+    .home-page [id='hero'] > div:last-child,
+    .home-page .hero-chip,
+    .home-page .home-orb,
+    .home-page .hud-corner,
+    .home-page .matrix-column,
+    .home-page .home-scanline {
+      display: none !important;
+    }
+
+    .home-page [id='hero'] .hero-progress-bar {
+      width: 100% !important;
+    }
+
+    .home-page [id='worlds'] > div,
+    .home-page [id='progression'] > div,
+    .home-page [id='courses'] > div,
+    .home-page [id='challenges'] > div,
+    .home-page [id='projects'] > div,
+    .home-page [id='community'] > div,
+    .home-page [id='nites'] > div,
+    .home-page footer > div {
+      grid-template-columns: 1fr !important;
+    }
+
+    .home-page [id='worlds'] .terminal-lines {
+      grid-template-columns: 24px 1fr !important;
+    }
+
+    .home-page [id='worlds'] .terminal-code,
+    .home-page [id='challenges'] .terminal-code {
+      font-size: 0.8rem !important;
+      line-height: 1.7 !important;
+    }
+
+    .home-page [id='worlds'] .scene-card-3d,
+    .home-page [id='progression'] .hud-panel,
+    .home-page [id='projects'] .scene-card-3d,
+    .home-page [id='projects'] .quest-card,
+    .home-page [id='challenges'] .quest-card,
+    .home-page [id='nites'] .scene-card-3d,
+    .home-page footer .scene-card-3d {
+      transform: none !important;
+    }
+
+    .home-page [id='community'] .leader-row {
+      grid-template-columns: 1fr auto !important;
+      font-size: 0.8rem !important;
+    }
+
+    .home-page [id='nites'] .scene-card-3d > div:first-child + div {
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .home-nav-shell {
+      gap: 0.75rem;
+    }
+
+    .home-page [id='hero'] {
+      padding: 1rem 0.75rem 2rem !important;
+    }
+
+    .home-page [id='hero'] h1 {
+      font-size: clamp(1.9rem, 12vw, 3.1rem) !important;
+    }
+
+    .home-page [id='hero'] p,
+    .home-page [id='hero'] .typewriter {
+      font-size: 0.92rem !important;
+    }
+
+    .home-page [id='worlds'],
+    .home-page [id='progression'],
+    .home-page [id='courses'],
+    .home-page [id='challenges'],
+    .home-page [id='projects'],
+    .home-page [id='community'],
+    .home-page [id='nites'] {
+      padding-left: 0.75rem !important;
+      padding-right: 0.75rem !important;
+    }
+
+    .home-page [id='nites'] .scene-card-3d > div:first-child + div {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    .home-page footer .reward-card,
+    .home-page [id='projects'] .rank-pill,
+    .home-page [id='nites'] .reward-card {
+      font-size: 0.85rem !important;
+    }
   }
 `
 
@@ -1484,6 +1677,7 @@ export default function HomePage() {
   const communityRef = useRef(null)
   const [cursorVisible, setCursorVisible] = useState(false)
   const [scene3Animated, setScene3Animated] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     document.body.classList.add('home-page')
@@ -1518,12 +1712,14 @@ export default function HomePage() {
       return
     }
 
+    setMobileMenuOpen(false)
     const offset = 86
     const top = window.scrollY + target.getBoundingClientRect().top - offset
     window.scrollTo({ top, behavior: 'auto' })
   }
 
   const handleStartQuest = () => {
+    setMobileMenuOpen(false)
     navigate('/login')
   }
 
@@ -1593,6 +1789,7 @@ export default function HomePage() {
         }}
       >
         <div
+          className="home-nav-shell"
           style={{
             width: '100%',
             maxWidth: '1400px',
@@ -1613,7 +1810,19 @@ export default function HomePage() {
             <span style={{ color: '#00ffff', fontSize: '1rem' }}>CODEQUEST</span>
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            className="mobile-menu-button"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            aria-label="Toggle navigation menu"
+            aria-expanded={mobileMenuOpen}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+
+          <div className="home-nav-links" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             <button type="button" onClick={() => jumpToSection('hero')} className="nav-button">
               Dashboard
             </button>
@@ -1653,6 +1862,19 @@ export default function HomePage() {
             </button>
           </div>
         </div>
+
+        {mobileMenuOpen && (
+          <div className="home-mobile-menu">
+            <button type="button" onClick={() => jumpToSection('hero')} className="nav-button home-mobile-menu-item">Dashboard</button>
+            <button type="button" onClick={() => jumpToSection('worlds')} className="nav-button home-mobile-menu-item">Worlds</button>
+            <button type="button" onClick={() => jumpToSection('progression')} className="nav-button home-mobile-menu-item">Ranks</button>
+            <button type="button" onClick={() => jumpToSection('challenges')} className="nav-button home-mobile-menu-item">Challenges</button>
+            <button type="button" onClick={() => jumpToSection('projects')} className="nav-button home-mobile-menu-item">Projects</button>
+            <button type="button" onClick={() => jumpToSection('community')} className="nav-button home-mobile-menu-item">Community</button>
+            <button type="button" onClick={() => jumpToSection('nites')} className="nav-button home-mobile-menu-item">30 Nites</button>
+            <button type="button" onClick={handleStartQuest} className="home-mobile-cta">Start Quest</button>
+          </div>
+        )}
       </nav>
 
       <main>
