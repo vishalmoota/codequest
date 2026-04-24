@@ -1,200 +1,616 @@
-import { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { MessageCircle, X, Send, Loader2, Bot, Minimize2 } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import api from '../api/axios';
 
-const KB = {
-  // Variables
-  variable: "**Variables** store data. In JS use `const` (never changes), `let` (can change), or `var` (old way, avoid).\n```js\nconst name = 'Alice'; // never reassigned\nlet age = 25;         // can change\nage = 26;             // ✅ ok\n```",
-  const: "**const** declares a constant — a value that won't be reassigned. Use it by default!\n```js\nconst PI = 3.14159;\n// PI = 3; ❌ TypeError!\n```",
-  let: "**let** declares a block-scoped variable that CAN be reassigned.\n```js\nlet count = 0;\ncount++; // count is now 1\n```",
-  // Data types
-  type: "JavaScript has 7 primitive types:\n- `string` — text: `'hello'`\n- `number` — int or float: `42`, `3.14`\n- `boolean` — `true` / `false`\n- `null` — intentional empty\n- `undefined` — not yet assigned\n- `symbol` — unique value\n- `bigint` — huge integers\n\nAnd 1 object type: `object` (arrays, functions, objects)",
-  string: "**Strings** are text. Use template literals for embedding values:\n```js\nconst name = 'Quest';\nconst msg = `Hello, ${name}!`; // 'Hello, Quest!'\n```\nUseful methods: `.toUpperCase()`, `.slice()`, `.includes()`, `.split()`, `.trim()`",
-  array: "**Arrays** are ordered lists:\n```js\nconst nums = [1, 2, 3];\nnums.push(4);        // add to end\nnums.pop();          // remove from end\nnums.map(n => n*2);  // [2,4,6]\nnums.filter(n=>n>1); // [2,3]\nnums.find(n=>n>2);   // 3\n```",
-  object: "**Objects** store key-value pairs:\n```js\nconst user = { name: 'Alex', age: 20 };\nconsole.log(user.name);     // 'Alex'\nconsole.log(user['age']);   // 20\n\n// Destructuring:\nconst { name, age } = user;\n```",
-  // Functions
-  function: "**Functions** are reusable code blocks:\n```js\n// Declaration\nfunction greet(name) { return `Hi, ${name}!`; }\n\n// Arrow function\nconst greet = (name) => `Hi, ${name}!`;\n\n// Default parameters\nconst add = (a, b = 0) => a + b;\n```",
-  arrow: "**Arrow functions** are shorter function syntax:\n```js\n// Traditional\nfunction double(x) { return x * 2; }\n\n// Arrow (implicit return when no braces)\nconst double = x => x * 2;\n\n// Multi-line arrow\nconst add = (a, b) => {\n  const sum = a + b;\n  return sum;\n};\n```",
-  closure: "**Closures** — a function that remembers its surrounding scope:\n```js\nfunction makeCounter() {\n  let count = 0;\n  return () => ++count; // remembers `count`!\n}\nconst counter = makeCounter();\ncounter(); // 1\ncounter(); // 2\n```\nClosures power module patterns, memoization, and event handlers.",
-  // Loops
-  loop: "**Loops** repeat code:\n```js\n// For loop\nfor (let i = 0; i < 5; i++) console.log(i);\n\n// While\nlet n = 0;\nwhile (n < 3) { console.log(n); n++; }\n\n// For...of (arrays)\nfor (const item of [1,2,3]) console.log(item);\n\n// Array methods (preferred)\n[1,2,3].forEach(n => console.log(n));\n```",
-  // Conditionals
-  conditional: "**Conditionals** control flow:\n```js\nif (score >= 90) {\n  grade = 'A';\n} else if (score >= 70) {\n  grade = 'B';\n} else {\n  grade = 'C';\n}\n\n// Ternary (one line)\nconst grade = score >= 90 ? 'A' : 'B';\n\n// Nullish coalescing\nconst name = user?.name ?? 'Guest';\n```",
-  // Async
-  async: "**Async/Await** — write async code that looks synchronous:\n```js\nasync function getData() {\n  try {\n    const res = await fetch('https://api.example.com/data');\n    const json = await res.json();\n    return json;\n  } catch (err) {\n    console.error('Error:', err);\n  }\n}\n```\n`await` pauses until the Promise resolves.",
-  promise: "**Promises** represent future values:\n```js\nconst p = new Promise((resolve, reject) => {\n  setTimeout(() => resolve('Done! ✅'), 1000);\n});\n\np.then(val => console.log(val))\n .catch(err => console.error(err));\n```\nChain `.then()` calls or use `async/await` instead.",
-  fetch: "**Fetch API** makes HTTP requests:\n```js\nconst data = await fetch('https://api.example.com')\n  .then(res => {\n    if (!res.ok) throw new Error('Network error');\n    return res.json();\n  });\n```\nAlways check `res.ok` before calling `.json()`!",
-  // DOM
-  dom: "**DOM** (Document Object Model) — JavaScript's interface to HTML:\n```js\n// Select elements\nconst el = document.querySelector('#myId');\nconst all = document.querySelectorAll('.myClass');\n\n// Modify\nel.textContent = 'Hello!';\nel.style.color = 'red';\nel.classList.add('active');\n\n// Create & append\nconst div = document.createElement('div');\ndocument.body.appendChild(div);\n```",
-  event: "**Events** respond to user actions:\n```js\nconst btn = document.querySelector('#btn');\n\nbtn.addEventListener('click', (e) => {\n  console.log('Clicked!', e.target);\n});\n\n// Common events: click, keydown, submit, input, scroll, mouseover\n```",
-  // React
-  react: "**React** is a UI library for building component-based interfaces:\n```jsx\nimport { useState } from 'react';\n\nfunction Counter() {\n  const [count, setCount] = useState(0); // state\n  return (\n    <div>\n      <p>{count}</p>\n      <button onClick={() => setCount(c => c+1)}>+</button>\n    </div>\n  );\n}\n```",
-  usestate: "**useState** hook manages component state:\n```jsx\nconst [value, setValue] = useState(initialValue);\n\n// Update (triggers re-render)\nsetValue(newValue);\n// Functional update (safe for derived values)\nsetValue(prev => prev + 1);\n```\nState is local to each component instance.",
-  useeffect: "**useEffect** runs side effects after render:\n```jsx\nuseEffect(() => {\n  // runs after every render\n}, []); // [] = run only once (on mount)\n\nuseEffect(() => {\n  // runs when `id` changes\n  fetchData(id);\n}, [id]);\n```\nReturn a cleanup function to avoid memory leaks.",
-  // General
-  error: "Common JS errors:\n- `TypeError` — wrong type (e.g. calling undefined as function)\n- `ReferenceError` — variable doesn't exist\n- `SyntaxError` — code can't be parsed\n- `RangeError` — value out of allowed range\n\n🛠️ Fix tip: Read the error message carefully — it tells you the LINE and what went wrong!",
-  git: "**Git basics:**\n```bash\ngit init            # Start repo\ngit add .           # Stage all files\ngit commit -m 'msg' # Commit\ngit push            # Push to remote\ngit pull            # Get latest\ngit branch feature  # New branch\ngit checkout main   # Switch branch\n```",
-  debug: "**Debugging tips:**\n1. `console.log()` variables to inspect them\n2. Use browser DevTools → Sources → set breakpoints\n3. Check the Console tab for errors (red text)\n4. Add `debugger;` statement to pause execution\n5. Read the error message FULLY — the line number is there!\n6. Comment out sections to isolate the problem",
-  hello: "Hey! 👋 I'm **CodeBot**, your coding assistant!\n\nAsk me about:\n- JavaScript (variables, functions, arrays, async...)\n- CSS & HTML\n- React hooks (useState, useEffect)\n- Git commands\n- Error debugging\n- Project-specific questions\n\nWhat can I help you with? 🚀",
-  hi: "Hey there! 👋 I'm **CodeBot**! Ask me any coding question and I'll do my best to help. What are you working on? 🛠️",
-  default: "Hmm, I'm not sure about that specific topic yet. 🤔 But try asking about:\n- **Variables, functions, arrays**\n- **Async/await, Promises, Fetch**\n- **React: useState, useEffect**\n- **DOM manipulation**\n- **Debugging tips, Git**\n\nOr describe what you're trying to build and I'll guide you! 💪"
+// ============ CONSTANTS ============
+const SUGGESTIONS = [
+  { label: '🔄 JS Closures', text: 'Explain JavaScript closures with a simple example' },
+  { label: '🐍 Python vs JS', text: 'What are the main differences between Python and JavaScript?' },
+  { label: '🔗 SQL Joins', text: 'Explain SQL joins with examples' },
+  { label: '📊 DSA Roadmap', text: 'Give me a complete DSA learning roadmap for beginners' },
+  { label: '⚛️ React Hooks', text: 'Explain React useState and useEffect with examples' },
+  { label: '🐛 Debug Code', text: 'I have a bug in my code, can you help me fix it?' },
+  { label: '🏗️ OOP Concepts', text: 'Explain OOP concepts: classes, inheritance, polymorphism in Python' },
+  { label: '⚡ Async/Await', text: 'How does async/await work in JavaScript?' },
+];
+
+const LANGUAGE_COLORS = {
+  javascript: '#f7df1e', python: '#3776ab', java: '#ed8b00',
+  'c++': '#00599c', html: '#e34f26', css: '#1572b6',
+  react: '#61dafb', typescript: '#3178c6', sql: '#4479a1',
+  default: '#00ffff'
 };
 
-function getResponse(input) {
-  const q = input.toLowerCase();
-  for (const [key, val] of Object.entries(KB)) {
-    if (key !== 'default' && q.includes(key)) return val;
-  }
-  // Extra keyword matches
-  if (q.includes('how') && q.includes('function')) return KB.function;
-  if (q.includes('what is') && q.includes('react')) return KB.react;
-  if (q.includes('explain') && q.includes('closure')) return KB.closure;
-  if (q.includes('fix') || q.includes('bug') || q.includes('not working')) return KB.debug;
-  if (q.includes('deploy') || q.includes('vercel') || q.includes('github')) return KB.git;
-  return KB.default;
-}
+const detectLanguage = (text) => {
+  const lower = text.toLowerCase();
+  if (lower.includes('python')) return 'python';
+  if (lower.includes('javascript') || /\bjs\b/.test(lower)) return 'javascript';
+  if (lower.includes('typescript') || /\bts\b/.test(lower)) return 'typescript';
+  if (lower.includes('html')) return 'html';
+  if (lower.includes('css')) return 'css';
+  if (lower.includes('react')) return 'react';
+  if (lower.includes('sql')) return 'sql';
+  if (lower.includes('java') && !lower.includes('javascript')) return 'java';
+  if (lower.includes('c++') || lower.includes('cpp')) return 'c++';
+  if (lower.includes('node')) return 'node.js';
+  return null;
+};
 
-const AIChatbot = () => {
-  const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { role: 'bot', text: "Hey! 👋 I'm **CodeBot** — your AI coding assistant!\n\nAsk me anything about JavaScript, React, CSS, debugging, or any project you're building!" }
-  ]);
-  const [input, setInput] = useState('');
-  const [typing, setTyping] = useState(false);
-  const messagesEndRef = useRef(null);
-  const inputRef = useRef(null);
-  const location = useLocation();
+const formatTime = (date) => {
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
 
-  useEffect(() => {
-    if (open) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      inputRef.current?.focus();
-    }
-  }, [messages, open]);
+// ============ CODE BLOCK RENDERER ============
+const CodeBlock = ({ code, language }) => {
+  const [copied, setCopied] = useState(false);
 
-  const send = () => {
-    if (!input.trim() || typing) return;
-    const userMsg = input.trim();
-    setInput('');
-    setMessages(m => [...m, { role: 'user', text: userMsg }]);
-    setTyping(true);
-    setTimeout(() => {
-      setMessages(m => [...m, { role: 'bot', text: getResponse(userMsg) }]);
-      setTyping(false);
-    }, 600 + Math.random() * 400);
-  };
-
-  const renderText = (text) => {
-    return text.split('\n').map((line, i) => {
-      if (line.startsWith('```')) return null;
-      if (line.startsWith('- ')) return <div key={i} className="text-xs text-slate-400 my-0.5 ml-2">• {line.slice(2).replace(/\*\*(.*?)\*\*/g, (_, b) => b)}</div>;
-      const parts = line.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
-      return (
-        <p key={i} className="text-xs text-slate-300 leading-relaxed my-0.5">
-          {parts.map((p, j) => {
-            if (p.startsWith('**') && p.endsWith('**')) return <strong key={j} className="text-white font-bold">{p.slice(2,-2)}</strong>;
-            if (p.startsWith('`') && p.endsWith('`')) return <code key={j} className="bg-dark-900 px-1 rounded text-yellow-300 font-mono text-[10px]">{p.slice(1,-1)}</code>;
-            return p;
-          })}
-        </p>
-      );
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     });
   };
 
-  const SUGGESTIONS = ['What is a variable?', 'Explain closures', 'How does useState work?', 'Common JS errors'];
+  return (
+    <div style={{
+      background: '#0d1117',
+      border: '1px solid rgba(0,255,255,0.2)',
+      borderRadius: '8px',
+      margin: '8px 0',
+      overflow: 'hidden',
+      fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace"
+    }}>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '6px 12px', background: 'rgba(0,0,0,0.4)',
+        borderBottom: '1px solid rgba(255,255,255,0.1)'
+      }}>
+        <span style={{
+          fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em',
+          color: LANGUAGE_COLORS[language?.toLowerCase()] || '#00ffff', fontWeight: 600
+        }}>
+          {language || 'code'}
+        </span>
+        <button onClick={handleCopy} style={{
+          background: 'none', border: '1px solid rgba(255,255,255,0.2)',
+          borderRadius: '4px', color: copied ? '#10b981' : '#9ca3af',
+          fontSize: '0.65rem', padding: '2px 8px', cursor: 'pointer',
+          transition: 'all 0.2s'
+        }}>
+          {copied ? '✓ Copied' : 'Copy'}
+        </button>
+      </div>
+      <pre style={{
+        margin: 0, padding: '12px', overflowX: 'auto',
+        fontSize: '0.82rem', lineHeight: '1.6',
+        color: '#e6edf3', whiteSpace: 'pre'
+      }}>
+        <code>{code}</code>
+      </pre>
+    </div>
+  );
+};
+
+// ============ MESSAGE RENDERER ============
+const MessageContent = ({ text }) => {
+  const parts = text.split(/(```[\s\S]*?```)/g);
 
   return (
+    <div style={{ lineHeight: '1.65', fontSize: '0.88rem' }}>
+      {parts.map((part, i) => {
+        if (part.startsWith('```')) {
+          const inner = part.slice(3, -3);
+          const firstNewline = inner.indexOf('\n');
+          const lang = firstNewline > 0 ? inner.slice(0, firstNewline).trim() : '';
+          const code = firstNewline > 0 ? inner.slice(firstNewline + 1) : inner;
+          return <CodeBlock key={i} code={code} language={lang} />;
+        }
+
+        // Process inline formatting
+        const lines = part.split('\n');
+        return (
+          <div key={i}>
+            {lines.map((line, j) => {
+              if (!line.trim()) return <div key={j} style={{ height: '8px' }} />;
+
+              // Bold **text**
+              const rendered = line.split(/(\*\*.*?\*\*|`[^`]+`)/g).map((seg, k) => {
+                if (seg.startsWith('**') && seg.endsWith('**')) {
+                  return <strong key={k} style={{ color: '#00ffff', fontWeight: 700 }}>{seg.slice(2, -2)}</strong>;
+                }
+                if (seg.startsWith('`') && seg.endsWith('`') && seg.length > 2) {
+                  return (
+                    <code key={k} style={{
+                      background: 'rgba(0,255,255,0.1)', color: '#00ff88',
+                      padding: '1px 5px', borderRadius: '3px', fontSize: '0.82rem',
+                      fontFamily: 'monospace'
+                    }}>{seg.slice(1, -1)}</code>
+                  );
+                }
+                return <span key={k}>{seg}</span>;
+              });
+
+              // Numbered list
+              if (/^\d+\.\s/.test(line)) {
+                return (
+                  <div key={j} style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
+                    <span style={{ color: '#7c3aed', fontWeight: 700, minWidth: '20px' }}>
+                      {line.match(/^\d+/)[0]}.
+                    </span>
+                    <span>{line.replace(/^\d+\.\s/, '')}</span>
+                  </div>
+                );
+              }
+
+              // Bullet list
+              if (line.startsWith('- ') || line.startsWith('* ')) {
+                return (
+                  <div key={j} style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
+                    <span style={{ color: '#00ffff' }}>▸</span>
+                    <span>{rendered.map((r, ri) => typeof r === 'string' ? r.replace(/^[-*]\s/, '') : r)}</span>
+                  </div>
+                );
+              }
+
+              return <div key={j} style={{ marginBottom: '3px' }}>{rendered}</div>;
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// ============ TYPING INDICATOR ============
+const TypingIndicator = () => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 0' }}>
+    <span style={{ color: '#9ca3af', fontSize: '0.8rem' }}>CodeBot is thinking</span>
+    {[0, 1, 2].map(i => (
+      <div key={i} style={{
+        width: '6px', height: '6px', borderRadius: '50%',
+        background: '#7c3aed',
+        animation: 'cqDotBounce 1.2s ease-in-out infinite',
+        animationDelay: `${i * 0.2}s`
+      }} />
+    ))}
+    <style>{`
+      @keyframes cqDotBounce {
+        0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+        40% { transform: scale(1.3); opacity: 1; }
+      }
+      @keyframes cqSlideIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes cqPulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.4); }
+        50% { box-shadow: 0 0 0 8px rgba(124,58,237,0); }
+      }
+      @keyframes cqFabGlow {
+        0%, 100% { box-shadow: 0 4px 20px rgba(124,58,237,0.5), 0 0 0 0 rgba(124,58,237,0.3); }
+        50% { box-shadow: 0 4px 30px rgba(124,58,237,0.8), 0 0 0 6px rgba(124,58,237,0); }
+      }
+    `}</style>
+  </div>
+);
+
+// ============ MAIN CHATBOT COMPONENT ============
+export default function AIChatbot() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      role: 'assistant',
+      text: `⚔️ **Welcome to CodeBot — Your AI Coding Tutor!**\n\nI'm powered by Llama 3.3 70B and ready to help you conquer any coding challenge.\n\n**I can help you with:**\n- JavaScript, Python, Java, C++, HTML, CSS\n- React, Node.js, TypeScript, SQL\n- Data Structures & Algorithms\n- Debugging your code\n- OOP, DBMS, OS, Computer Networks\n\nAsk me anything or pick a suggestion below! 🚀`,
+      timestamp: new Date()
+    }
+  ]);
+  const [conversationHistory, setConversationHistory] = useState([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentLang, setCurrentLang] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
+  const chatWindowRef = useRef(null);
+
+  // Auto scroll to bottom
+  useEffect(() => {
+    if (messagesEndRef.current && isOpen && !isMinimized) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isLoading, isOpen, isMinimized]);
+
+  // Focus input when opened
+  useEffect(() => {
+    if (isOpen && !isMinimized && inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [isOpen, isMinimized]);
+
+  // Update unread count when closed
+  useEffect(() => {
+    if (!isOpen && messages.length > 1) {
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg.role === 'assistant') {
+        setUnreadCount(prev => prev + 1);
+      }
+    }
+  }, [messages]);
+
+  // Clear unread when opened
+  useEffect(() => {
+    if (isOpen) setUnreadCount(0);
+  }, [isOpen]);
+
+  // Language detection while typing
+  const handleInputChange = (e) => {
+    const val = e.target.value;
+    setInput(val);
+    const lang = detectLanguage(val);
+    if (lang) setCurrentLang(lang);
+  };
+
+  const sendMessage = useCallback(async (messageText) => {
+    const text = (messageText || input).trim();
+    if (!text || isLoading) return;
+
+    // Detect language
+    let lang = detectLanguage(text);
+    if (!lang && conversationHistory.length > 0) {
+      const lastUser = [...conversationHistory].reverse().find(m => m.role === 'user');
+      if (lastUser) lang = detectLanguage(lastUser.content);
+    }
+    if (lang) setCurrentLang(lang);
+
+    const userMsg = {
+      id: Date.now(),
+      role: 'user',
+      text: text,
+      timestamp: new Date(),
+      language: lang
+    };
+
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+    setIsLoading(true);
+
+    const newHistory = [...conversationHistory, { role: 'user', content: text }];
+    setConversationHistory(newHistory);
+
+    try {
+      const response = await api.post('/ai-chat/chat', {
+        message: text,
+        history: conversationHistory
+      }, {
+        timeout: 30000,
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const reply = response.data.reply;
+
+      const assistantMsg = {
+        id: Date.now() + 1,
+        role: 'assistant',
+        text: reply,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, assistantMsg]);
+      setConversationHistory(prev => [...prev, { role: 'assistant', content: reply }]);
+
+    } catch (error) {
+      let errorText = 'Sorry, I encountered an error. Please try again! 🔧';
+
+      if (error.response?.status === 429) {
+        errorText = '⏳ Too many requests! Please wait a moment before sending another message.';
+      } else if (error.response?.status === 503) {
+        errorText = '🔄 AI service is temporarily busy. Please try again in a few seconds.';
+      } else if (error.code === 'ECONNABORTED') {
+        errorText = '⏱️ Request timed out. The AI is taking too long. Please try again.';
+      } else if (error.response?.data?.error) {
+        errorText = `❌ ${error.response.data.error}`;
+      }
+
+      setMessages(prev => [...prev, {
+        id: Date.now() + 1,
+        role: 'assistant',
+        text: errorText,
+        timestamp: new Date(),
+        isError: true
+      }]);
+    } finally {
+      setIsLoading(false);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [input, isLoading, conversationHistory]);
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const clearChat = () => {
+    setMessages([{
+      id: Date.now(),
+      role: 'assistant',
+      text: '🔄 Chat cleared! Ready for your next coding question. What would you like to learn? ⚡',
+      timestamp: new Date()
+    }]);
+    setConversationHistory([]);
+    setCurrentLang(null);
+  };
+
+  // ============ RENDER ============
+  return (
     <>
-      {/* Floating button */}
-      <button onClick={() => setOpen(o => !o)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-2xl shadow-primary-500/40 flex items-center justify-center transition-all duration-300 hover:scale-110"
-        style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
-        {open ? <X size={22} className="text-white" /> : <Bot size={22} className="text-white" />}
-        {!open && <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full border-2 border-dark-800 animate-pulse" />}
+      {/* FAB Button */}
+      <button
+        onClick={() => { setIsOpen(prev => !prev); setIsMinimized(false); }}
+        style={{
+          position: 'fixed', bottom: '16px', right: '16px', zIndex: 9998,
+          width: '56px', height: '56px', borderRadius: '50%',
+          background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+          border: 'none', cursor: 'pointer', color: 'white',
+          fontSize: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 4px 20px rgba(124,58,237,0.5)',
+          animation: 'cqFabGlow 2s ease-in-out infinite',
+          transition: 'transform 0.2s'
+        }}
+        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
+        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+        title="CodeBot AI Tutor"
+      >
+        {isOpen ? '✕' : '🤖'}
+        {!isOpen && unreadCount > 0 && (
+          <div style={{
+            position: 'absolute', top: '-4px', right: '-4px',
+            background: '#ef4444', color: 'white', borderRadius: '50%',
+            width: '20px', height: '20px', fontSize: '0.65rem',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontWeight: 700, border: '2px solid #0a0a1a'
+          }}>
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </div>
+        )}
       </button>
 
-      {/* Chat window */}
-      {open && (
-        <div className="fixed bottom-24 right-6 z-50 w-80 sm:w-96 rounded-2xl shadow-2xl shadow-black/60 overflow-hidden"
-          style={{ border: '1px solid rgba(99,102,241,0.3)', background: '#1a1a2e' }}>
+      {/* Chat Window */}
+      {isOpen && (
+        <div
+          ref={chatWindowRef}
+          style={{
+            position: 'fixed', bottom: '84px', right: '16px', left: '16px', zIndex: 9999,
+            width: 'auto',
+            maxWidth: '420px',
+            height: isMinimized ? '60px' : 'min(600px, calc(100vh - 104px))',
+            background: '#0f1117',
+            border: '1px solid rgba(124,58,237,0.4)',
+            borderRadius: '16px', overflow: 'hidden',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(124,58,237,0.2)',
+            display: 'flex', flexDirection: 'column',
+            animation: 'cqSlideIn 0.25s ease-out',
+            transition: 'height 0.3s ease'
+          }}
+        >
           {/* Header */}
-          <div className="flex items-center gap-3 px-4 py-3" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.2))' }}>
-            <div className="w-8 h-8 rounded-full bg-primary-500/30 border border-primary-500/50 flex items-center justify-center">
-              <Bot size={16} className="text-primary-300" />
-            </div>
-            <div>
-              <div className="text-sm font-bold text-slate-100">CodeBot 🤖</div>
-              <div className="text-[10px] text-emerald-400 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
-                Online — ask me anything!
+          <div style={{
+            padding: '12px 14px',
+            background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(79,70,229,0.2))',
+            borderBottom: '1px solid rgba(124,58,237,0.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            gap: '10px',
+            flexShrink: 0
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{
+                width: '36px', height: '36px', borderRadius: '50%',
+                background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '1.1rem', flexShrink: 0
+              }}>🤖</div>
+              <div>
+                <div style={{ color: 'white', fontWeight: 700, fontSize: '0.9rem', fontFamily: 'monospace' }}>
+                  CodeBot
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <div style={{
+                    width: '7px', height: '7px', borderRadius: '50%',
+                    background: isLoading ? '#f59e0b' : '#10b981',
+                    animation: isLoading ? 'cqPulse 1s infinite' : 'none'
+                  }} />
+                  <span style={{ color: isLoading ? '#f59e0b' : '#10b981', fontSize: '0.72rem' }}>
+                    {isLoading ? 'Thinking...' : 'Online — ask me anything!'}
+                  </span>
+                </div>
               </div>
             </div>
-            <button onClick={() => setOpen(false)} className="ml-auto text-slate-500 hover:text-slate-300 transition-colors">
-              <Minimize2 size={15} />
-            </button>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              {currentLang && (
+                <span style={{
+                  background: 'rgba(0,0,0,0.4)',
+                  border: `1px solid ${LANGUAGE_COLORS[currentLang] || '#00ffff'}`,
+                  borderRadius: '12px', padding: '2px 8px',
+                  fontSize: '0.65rem', color: LANGUAGE_COLORS[currentLang] || '#00ffff',
+                  fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.05em'
+                }}>
+                  {currentLang}
+                </span>
+              )}
+              <button onClick={clearChat} title="Clear chat" style={{
+                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '6px', color: '#9ca3af', padding: '4px 8px',
+                cursor: 'pointer', fontSize: '0.7rem', transition: 'all 0.2s'
+              }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.2)'; e.currentTarget.style.color = '#ef4444'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#9ca3af'; }}
+              >
+                🗑️ Clear
+              </button>
+              <button onClick={() => setIsMinimized(p => !p)} title={isMinimized ? 'Expand' : 'Minimize'} style={{
+                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '6px', color: '#9ca3af', padding: '4px 8px',
+                cursor: 'pointer', fontSize: '0.8rem'
+              }}>
+                {isMinimized ? '▲' : '▼'}
+              </button>
+            </div>
           </div>
 
-          {/* Messages */}
-          <div className="h-72 overflow-y-auto px-3 py-3 space-y-3" style={{ scrollbarWidth: 'thin' }}>
-            {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} gap-2`}>
-                {msg.role === 'bot' && (
-                  <div className="w-6 h-6 rounded-full bg-primary-500/30 border border-primary-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Bot size={12} className="text-primary-300" />
+          {!isMinimized && (
+            <>
+              {/* Messages Area */}
+              <div style={{
+                flex: 1, overflowY: 'auto', padding: '12px 14px',
+                display: 'flex', flexDirection: 'column', gap: '10px',
+                scrollbarWidth: 'thin', scrollbarColor: '#374151 transparent'
+              }}>
+                {messages.map((msg) => (
+                  <div key={msg.id} style={{
+                    display: 'flex',
+                    flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
+                    gap: '8px', alignItems: 'flex-start',
+                    animation: 'cqSlideIn 0.2s ease-out'
+                  }}>
+                    {msg.role === 'assistant' && (
+                      <div style={{
+                        width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0,
+                        background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem'
+                      }}>🤖</div>
+                    )}
+                    <div style={{
+                      maxWidth: 'min(85%, 100%)',
+                      background: msg.role === 'user'
+                        ? 'linear-gradient(135deg, #7c3aed, #4f46e5)'
+                        : msg.isError ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.05)',
+                      border: msg.role === 'user' ? 'none'
+                        : msg.isError ? '1px solid rgba(239,68,68,0.3)'
+                        : '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: msg.role === 'user' ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
+                      padding: '10px 13px',
+                      color: msg.role === 'user' ? 'white' : '#e2e8f0',
+                    }}>
+                      {msg.role === 'user' ? (
+                        <div style={{ fontSize: '0.88rem', lineHeight: '1.5' }}>{msg.text}</div>
+                      ) : (
+                        <MessageContent text={msg.text} />
+                      )}
+                      <div style={{
+                        fontSize: '0.65rem', marginTop: '5px', opacity: 0.5,
+                        textAlign: msg.role === 'user' ? 'right' : 'left',
+                        color: msg.role === 'user' ? 'rgba(255,255,255,0.7)' : '#6b7280'
+                      }}>
+                        {formatTime(new Date(msg.timestamp))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {isLoading && (
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                    <div style={{
+                      width: '30px', height: '30px', borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', flexShrink: 0
+                    }}>🤖</div>
+                    <div style={{
+                      background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: '4px 16px 16px 16px', padding: '12px 14px'
+                    }}>
+                      <TypingIndicator />
+                    </div>
                   </div>
                 )}
-                <div className={`max-w-[82%] rounded-2xl px-3 py-2 ${msg.role === 'user'
-                  ? 'bg-primary-600/80 text-white ml-8'
-                  : 'bg-dark-600/80 border border-dark-400/30'}`}>
-                  {msg.role === 'user'
-                    ? <p className="text-xs text-white">{msg.text}</p>
-                    : renderText(msg.text)
-                  }
-                </div>
+
+                <div ref={messagesEndRef} />
               </div>
-            ))}
-            {typing && (
-              <div className="flex justify-start gap-2">
-                <div className="w-6 h-6 rounded-full bg-primary-500/30 flex items-center justify-center flex-shrink-0">
-                  <Bot size={12} className="text-primary-300" />
-                </div>
-                <div className="bg-dark-600/80 border border-dark-400/30 rounded-2xl px-4 py-3 flex gap-1.5 items-center">
-                  {[0,1,2].map(i => (
-                    <span key={i} className="w-1.5 h-1.5 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: `${i*0.15}s` }} />
+
+              {/* Suggestions */}
+              {messages.length <= 1 && (
+                <div style={{
+                  padding: '6px 12px 4px', borderTop: '1px solid rgba(255,255,255,0.05)',
+                  display: 'flex', flexWrap: 'wrap', gap: '5px', flexShrink: 0
+                }}>
+                  {SUGGESTIONS.map((s, i) => (
+                    <button key={i} onClick={() => sendMessage(s.text)} style={{
+                      background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.3)',
+                      borderRadius: '12px', color: '#a78bfa', padding: '4px 10px',
+                      fontSize: '0.7rem', cursor: 'pointer', transition: 'all 0.2s',
+                      fontFamily: 'monospace'
+                    }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(124,58,237,0.25)'; e.currentTarget.style.color = 'white'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(124,58,237,0.1)'; e.currentTarget.style.color = '#a78bfa'; }}
+                    >
+                      {s.label}
+                    </button>
                   ))}
                 </div>
+              )}
+
+              {/* Input Area */}
+              <div style={{
+                padding: '10px 12px',
+                borderTop: '1px solid rgba(255,255,255,0.08)',
+                background: 'rgba(0,0,0,0.3)',
+                flexShrink: 0
+              }}>
+                <div style={{
+                  display: 'flex', gap: '8px', alignItems: 'flex-end',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(124,58,237,0.3)',
+                  borderRadius: '12px', padding: '8px 12px',
+                  transition: 'border-color 0.2s'
+                }}>
+                  <textarea
+                    ref={inputRef}
+                    value={input}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Ask a coding question... (Enter to send, Shift+Enter for newline)"
+                    disabled={isLoading}
+                    rows={1}
+                    style={{
+                      flex: 1, minWidth: 0, background: 'none', border: 'none', outline: 'none',
+                      color: 'white', fontSize: '0.85rem', lineHeight: '1.5',
+                      resize: 'none', fontFamily: 'inherit', maxHeight: '100px',
+                      scrollbarWidth: 'none'
+                    }}
+                    onInput={e => {
+                      e.target.style.height = 'auto';
+                      e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px';
+                    }}
+                  />
+                  <button
+                    onClick={() => sendMessage()}
+                    disabled={isLoading || !input.trim()}
+                    style={{
+                      background: isLoading || !input.trim()
+                        ? 'rgba(124,58,237,0.3)'
+                        : 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+                      border: 'none', borderRadius: '8px',
+                      width: '34px', height: '34px', cursor: isLoading || !input.trim() ? 'not-allowed' : 'pointer',
+                      color: 'white', fontSize: '1rem', display: 'flex',
+                      alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.2s', flexShrink: 0
+                    }}
+                  >
+                    {isLoading ? '⏳' : '➤'}
+                  </button>
+                </div>
+                <div style={{
+                  textAlign: 'center', marginTop: '5px',
+                  fontSize: '0.62rem', color: '#4b5563'
+                }}>
+                  Powered by Llama 3.3 70B via Groq ⚡
+                </div>
               </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Quick suggestions */}
-          {messages.length <= 2 && (
-            <div className="px-3 pb-2 flex flex-wrap gap-1.5">
-              {SUGGESTIONS.map(s => (
-                <button key={s} onClick={() => { setInput(s); }}
-                  className="text-[10px] px-2 py-1 rounded-lg bg-primary-500/10 text-primary-300 border border-primary-500/20 hover:border-primary-400/40 transition-all">
-                  {s}
-                </button>
-              ))}
-            </div>
+            </>
           )}
-
-          {/* Input */}
-          <div className="flex gap-2 px-3 py-3 border-t border-dark-400/30">
-            <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && send()}
-              placeholder="Ask a coding question..."
-              className="flex-1 bg-dark-600/50 border border-dark-400/40 rounded-xl px-3 py-2 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-primary-500/50" />
-            <button onClick={send} disabled={!input.trim() || typing}
-              className="p-2 rounded-xl bg-primary-600 hover:bg-primary-500 disabled:opacity-40 transition-all">
-              <Send size={14} className="text-white" />
-            </button>
-          </div>
         </div>
       )}
     </>
   );
-};
-
-export default AIChatbot;
+}

@@ -1083,9 +1083,9 @@ const STYLES = `
     }
 
     .home-page [id='hero'] {
-      min-height: auto !important;
-      padding-top: 1.5rem !important;
-      padding-bottom: 2rem !important;
+      min-height: calc(100vh - 73px) !important;
+      padding-top: 0.75rem !important;
+      padding-bottom: 0.75rem !important;
     }
 
     .home-page [id='hero'] .hero-grid {
@@ -1111,10 +1111,16 @@ const STYLES = `
     }
 
     .home-page [id='hero'] .hero-robot-stage {
-      top: 44% !important;
-      width: min(100vw, 360px) !important;
-      height: 300px !important;
-      transform: translate(-50%, -50%) scale(0.7) !important;
+      top: 50% !important;
+      width: min(94vw, 440px) !important;
+      height: min(74vh, 520px) !important;
+      transform: translate(-50%, -50%) scale(0.92) !important;
+    }
+
+    .home-page [id='hero'] .hero-title-stack,
+    .home-page [id='hero'] .hero-scroll-hint,
+    .home-page [id='hero'] .hero-center-rings {
+      display: none !important;
     }
 
     .home-page [id='hero'] .hero-progress-bar {
@@ -1168,14 +1174,15 @@ const STYLES = `
     }
 
     .home-page [id='hero'] {
-      padding: 1rem 0.75rem 2rem !important;
+      min-height: calc(100vh - 73px) !important;
+      padding: 0.65rem 0.65rem 0.75rem !important;
     }
 
     .home-page [id='hero'] .hero-robot-stage {
-      top: 42% !important;
-      width: min(100vw, 320px) !important;
-      height: 270px !important;
-      transform: translate(-50%, -50%) scale(0.62) !important;
+      top: 50% !important;
+      width: min(96vw, 420px) !important;
+      height: min(72vh, 500px) !important;
+      transform: translate(-50%, -50%) scale(0.86) !important;
     }
 
     .home-page [id='hero'] h1 {
@@ -1986,13 +1993,13 @@ export default function HomePage() {
             ))}
           </div>
 
-          <div style={{ position: 'absolute', left: '50%', top: '49%', transform: 'translate(-50%, -50%)', width: 'min(96vw, 1100px)', height: '420px', pointerEvents: 'none' }}>
+          <div className="hero-center-rings" style={{ position: 'absolute', left: '50%', top: '49%', transform: 'translate(-50%, -50%)', width: 'min(96vw, 1100px)', height: '420px', pointerEvents: 'none' }}>
             <div style={{ position: 'absolute', left: '50%', top: '50%', width: '320px', height: '320px', transform: 'translate(-50%, -50%)', borderRadius: '50%', border: '1px solid rgba(0,255,255,0.2)', boxShadow: '0 0 50px rgba(0,255,255,0.08)', animation: 'ringSpin 18s linear infinite' }} />
             <div style={{ position: 'absolute', left: '50%', top: '50%', width: '430px', height: '430px', transform: 'translate(-50%, -50%)', borderRadius: '50%', border: '1px dashed rgba(124,58,237,0.28)', boxShadow: '0 0 40px rgba(124,58,237,0.07)' }} />
             <div style={{ position: 'absolute', left: '50%', top: '51%', width: '560px', height: '2px', transform: 'translateX(-50%)', background: 'linear-gradient(90deg, transparent, rgba(0,255,255,0.6), transparent)', boxShadow: '0 0 24px rgba(0,255,255,0.4)' }} />
           </div>
 
-          <div style={{ position: 'absolute', left: '50%', top: '63%', transform: 'translateX(-50%)', textAlign: 'center', zIndex: 2 }}>
+          <div className="hero-title-stack" style={{ position: 'absolute', left: '50%', top: '63%', transform: 'translateX(-50%)', textAlign: 'center', zIndex: 2 }}>
             <h1
               className="title-glitch"
               style={{
@@ -2029,6 +2036,7 @@ export default function HomePage() {
           </div>
 
           <div
+            className="hero-scroll-hint"
             style={{
               position: 'absolute',
               bottom: '2rem',

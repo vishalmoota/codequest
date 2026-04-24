@@ -315,23 +315,23 @@ const CodeBattlePage = () => {
   // ========= BATTLE =========
   if (phase === 'battle' && problem) {
     return (
-      <div className="h-[calc(100vh-4rem)] flex flex-col">
+      <div className="min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] flex flex-col overflow-x-hidden">
         {/* Battle header */}
-        <div className="flex items-center justify-between px-4 py-2 bg-dark-800 border-b border-red-500/20">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-y-2 px-4 py-2 bg-dark-800 border-b border-red-500/20">
+          <div className="flex items-center gap-2 min-w-0">
             <Swords size={16} className="text-red-400" />
-            <span className="text-sm font-bold text-red-300">BATTLE MODE</span>
+            <span className="text-xs sm:text-sm font-bold text-red-300">BATTLE MODE</span>
             <span className="text-slate-500">|</span>
-            <span className="text-sm text-slate-400">{problem.title}</span>
+            <span className="text-xs sm:text-sm text-slate-400 truncate max-w-[36vw] sm:max-w-none">{problem.title}</span>
           </div>
 
-          <div className={`flex items-center gap-2 font-mono font-bold text-xl ${getTimerColor()}`}>
+          <div className={`flex items-center gap-2 font-mono font-bold text-lg sm:text-xl ${getTimerColor()}`}>
             <Timer size={18} />
             {formatTime(timeLeft)}
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm text-yellow-400 font-semibold">
+            <span className="text-xs sm:text-sm text-yellow-400 font-semibold">
               <Zap size={14} className="inline" /> {problem.xpReward} XP
             </span>
           </div>
@@ -353,9 +353,9 @@ const CodeBattlePage = () => {
         </div>
 
         {/* Main content */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 min-h-0 flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
           {/* Problem panel */}
-          <div className="w-2/5 overflow-y-auto p-6 border-r border-dark-400/30">
+          <div className="w-full lg:w-2/5 max-h-[32vh] sm:max-h-[36vh] lg:max-h-none overflow-y-auto p-4 lg:p-6 border-b lg:border-b-0 lg:border-r border-dark-400/30">
             <h2 className="text-xl font-bold mb-3">{problem.title}</h2>
             <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap mb-4">{problem.description}</p>
 
@@ -376,8 +376,8 @@ const CodeBattlePage = () => {
           </div>
 
           {/* Editor panel */}
-          <div className="flex-1 flex flex-col">
-            <div className="flex-1">
+          <div className="w-full lg:flex-1 flex flex-col min-h-[56vh] sm:min-h-[58vh] lg:min-h-0">
+            <div className="relative h-[44vh] sm:h-[48vh] lg:min-h-0 lg:flex-1 overflow-hidden">
               <Editor
                 height="100%"
                 language="javascript"
@@ -396,7 +396,7 @@ const CodeBattlePage = () => {
               />
             </div>
 
-            <div className="flex items-center justify-end gap-3 px-4 py-3 border-t border-dark-400/50 bg-dark-800/50">
+            <div className="flex items-center justify-end gap-3 px-4 py-3 border-t border-dark-400/50 bg-dark-800/50 sticky bottom-0 lg:static flex-shrink-0">
               <button
                 onClick={handleSubmit}
                 className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-red-600 to-orange-600 

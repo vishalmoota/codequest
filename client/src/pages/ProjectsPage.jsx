@@ -102,7 +102,7 @@ const ProjectsPage = () => {
             <Link
               key={project.id}
               to={`/projects/${project.id}`}
-              className="group overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] transition hover:-translate-y-1 hover:border-violet-500/30 hover:bg-white/[0.05]"
+              className="group overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] transition hover:-translate-y-1 hover:border-violet-500/30 hover:bg-white/[0.05] min-w-0"
             >
               <div
                 className="flex h-44 items-center justify-center bg-gradient-to-br text-6xl"

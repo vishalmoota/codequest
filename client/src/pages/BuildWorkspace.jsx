@@ -107,7 +107,7 @@ const BuildWorkspace = () => {
   const language = currentStep?.language || 'javascript';
 
   return (
-    <div className="h-screen flex flex-col bg-dark-900 overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-dark-900 overflow-x-hidden lg:h-screen lg:overflow-hidden">
       {/* Top bar */}
       <div className="flex items-center gap-4 px-4 py-2.5 border-b border-dark-400/20 bg-dark-800/80
                       backdrop-blur-md flex-shrink-0">
@@ -146,10 +146,10 @@ const BuildWorkspace = () => {
       </div>
 
       {/* Main two-panel layout */}
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 flex-col lg:flex-row">
         {/* ─── LEFT PANEL ─ Steps + Theory ─────────────────────────────── */}
-        <div className="w-[380px] xl:w-[420px] flex-shrink-0 border-r border-dark-400/20
-                        flex flex-col bg-dark-800/60">
+        <div className="w-full lg:w-[380px] xl:w-[420px] lg:flex-shrink-0 border-r border-dark-400/20
+                        flex flex-col bg-dark-800/60 min-h-0">
           {/* Tab bar */}
           <div className="flex border-b border-dark-400/20 flex-shrink-0">
             {[['steps', '📋 Steps'], ['theory', '📚 Theory']].map(([tab, label]) => (
@@ -165,7 +165,7 @@ const BuildWorkspace = () => {
           </div>
 
           {/* Scrollable content */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
             {leftTab === 'steps' && (
               <>
                 <p className="text-[11px] text-slate-600 mb-2">
@@ -227,7 +227,7 @@ const BuildWorkspace = () => {
         </div>
 
         {/* ─── RIGHT PANEL ─ Monaco Editor ──────────────────────────────── */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 min-h-[60vh] lg:min-h-0">
           <CodeEditor
             key={`${id}-step-${activeStep}`}
             defaultCode={starterCode}

@@ -12,14 +12,34 @@ const getEditorLanguage = (language) => {
   return 'javascript';
 };
 
-const isStepValid = (step, code, runResult = {}) => {
+const isStepValid = (step, code, runResult = {}, projectLanguage = '') => {
   const validation = step.validation || [];
+  const trimmedCode = (code || '').trim();
+  const starterCode = (step.starterCode || '').trim();
+  const isHtmlProject = projectLanguage === 'html' || projectLanguage === 'html-css';
+
   if (validation.length > 0) {
-    return validation.every((token) => code.includes(token));
+    const matchingTokenCount = validation.filter((token) => code.includes(token)).length;
+    if (matchingTokenCount === validation.length) {
+      return true;
+    }
+
+    if (isHtmlProject) {
+      const changedFromStarter = trimmedCode.length > 0 && trimmedCode !== starterCode;
+      const hasNoRuntimeError = !(runResult.stderr || '').trim();
+      return changedFromStarter && hasNoRuntimeError;
+    }
+
+    return false;
   }
 
   const expectedOutput = (step.expectedOutput || '').trim();
   if (!expectedOutput) {
+    if (isHtmlProject) {
+      const changedFromStarter = trimmedCode.length > 0 && trimmedCode !== starterCode;
+      const hasNoRuntimeError = !(runResult.stderr || '').trim();
+      return changedFromStarter && hasNoRuntimeError;
+    }
     return true;
   }
 
@@ -39,6 +59,13 @@ const normalizeStepCodes = (rawStepCodes = {}) => {
     return Object.fromEntries(rawStepCodes.entries());
   }
   return rawStepCodes || {};
+};
+
+const normalizeCompletedSteps = (rawCompletedSteps = []) => {
+  if (!Array.isArray(rawCompletedSteps)) return [];
+  return [...new Set(rawCompletedSteps
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value)))];
 };
 
 const getSavedStepIndex = (progress = {}, totalSteps = 0) => {
@@ -101,6 +128,7 @@ const ProjectBuilder = () => {
   const previewRef = useRef(null);
   const draftSaveTimerRef = useRef(null);
   const lastSavedDraftRef = useRef('');
+  const lastSyncedStepKeyRef = useRef('');
   const buildMode = useMemo(() => new URLSearchParams(location.search).get('mode') || 'continue', [location.search]);
 
   const project = useMemo(
@@ -140,7 +168,7 @@ const ProjectBuilder = () => {
         const response = await api.get(`/project-progress/${project.id}`);
         const progress = response.data || {};
         const savedCodes = normalizeStepCodes(progress.stepCodes);
-        const completed = Array.isArray(progress.completedSteps) ? progress.completedSteps : [];
+        const completed = normalizeCompletedSteps(progress.completedSteps);
 
         setStepCodes(savedCodes);
         setCompletedSteps(completed);
@@ -165,16 +193,24 @@ const ProjectBuilder = () => {
 
   useEffect(() => {
     if (!currentStepData) return;
+
+    const stepKey = `${buildMode}:${currentStepData.index}`;
+    if (lastSyncedStepKeyRef.current === stepKey) {
+      return;
+    }
+
     const savedCode = buildMode === 'start'
       ? currentStepData.starterCode || ''
       : stepCodes[String(currentStepData.index)] || currentStepData.starterCode || '';
+
+    lastSyncedStepKeyRef.current = stepKey;
     setCode(savedCode);
     setPreviewHtml(project?.language === 'html' ? savedCode : '');
     setRunOutput('');
     setRunError('');
     setValidationMessage('');
     setShowHint(false);
-  }, [buildMode, currentStep, currentStepData, project, stepCodes]);
+  }, [buildMode, currentStepData, project, stepCodes]);
 
   useEffect(() => {
     if (buildMode !== 'start' && completedSteps.length > 0 && completedSteps.length === totalSteps) {
@@ -217,7 +253,7 @@ const ProjectBuilder = () => {
 
       const payload = await response.json();
       const savedCodes = normalizeStepCodes(payload.progress?.stepCodes);
-      const completed = Array.isArray(payload.progress?.completedSteps) ? payload.progress.completedSteps : [];
+      const completed = normalizeCompletedSteps(payload.progress?.completedSteps);
 
       lastSavedDraftRef.current = draftKey;
       setStepCodes(savedCodes);
@@ -283,7 +319,7 @@ const ProjectBuilder = () => {
       const xpAwarded = response.data?.xpAwarded || 0;
       const progress = response.data?.progress || {};
       const savedCodes = normalizeStepCodes(progress.stepCodes);
-      const completed = Array.isArray(progress.completedSteps) ? progress.completedSteps : [];
+      const completed = normalizeCompletedSteps(progress.completedSteps);
       const totalXpEarned = progress.totalXpEarned || 0;
 
       setStepCodes(savedCodes);
@@ -334,7 +370,7 @@ const ProjectBuilder = () => {
       setRunError(stderr);
 
       const runResult = { stdout, stderr };
-      const valid = isStepValid(currentStepData, code, runResult);
+      const valid = isStepValid(currentStepData, code, runResult, project.language);
 
       if (valid) {
         await saveStepProgress(code, runResult);

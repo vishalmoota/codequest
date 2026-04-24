@@ -248,7 +248,7 @@ const DashboardPage = () => {
           </div>
 
           {/* Quick stats card */}
-          <div className="bg-dark-800/60 backdrop-blur-sm border border-dark-400/30 rounded-2xl p-5 min-w-[260px]">
+          <div className="w-full bg-dark-800/60 backdrop-blur-sm border border-dark-400/30 rounded-2xl p-5 min-w-0 lg:min-w-[260px]">
             <div className="flex items-center gap-3 mb-3">
               <AvatarDisplay avatar={user?.avatar} size="sm" />
               <div>

@@ -1222,18 +1222,18 @@ const TheoryPage = () => {
   const section = theoryData.sections[currentSection];
 
   return (
-    <div className="h-screen bg-gray-950 text-white flex flex-col overflow-hidden">
+    <div className="min-h-screen lg:h-screen bg-gray-950 text-white flex flex-col overflow-y-auto lg:overflow-hidden">
 
       {/* TOP NAV */}
-      <div className="flex items-center justify-between px-4 py-2 border-b
+      <div className="flex flex-wrap items-center justify-between gap-y-2 px-4 py-2 border-b
                       border-white/10 bg-gray-900 flex-shrink-0">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 min-w-0">
           <button onClick={() => navigate(`/course/${courseId}`)}
-            className="text-gray-400 hover:text-white text-sm font-mono transition">
+            className="text-gray-400 hover:text-white text-xs sm:text-sm font-mono transition whitespace-nowrap">
             ← {course.title}
           </button>
           <span className="text-gray-600">/</span>
-          <span className="text-gray-300 text-sm font-mono">
+          <span className="text-gray-300 text-xs sm:text-sm font-mono truncate max-w-[42vw] sm:max-w-none">
             Level {levelNumber} Theory
           </span>
           {/* Section progress */}
@@ -1274,12 +1274,12 @@ const TheoryPage = () => {
       </div>
 
       {/* SPLIT LAYOUT */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 flex-col lg:flex-row overflow-y-visible lg:overflow-hidden">
 
         {/* LEFT — Theory Content */}
-        <div className="w-2/5 flex flex-col border-r border-white/10
+        <div className="w-full lg:w-2/5 flex flex-col border-b lg:border-b-0 lg:border-r border-white/10
                         overflow-hidden flex-shrink-0"
-          style={{ minWidth: '340px', maxWidth: '480px' }}>
+          style={{ minWidth: '0px', maxWidth: '100%' }}>
 
           {/* Section tabs */}
           <div className="flex gap-1 px-4 pt-3 pb-0 flex-shrink-0 
@@ -1380,7 +1380,7 @@ const TheoryPage = () => {
         </div>
 
         {/* RIGHT — Editor & Output */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="w-full lg:flex-1 flex flex-col overflow-hidden min-h-[68vh] lg:min-h-0">
 
           {/* File tab */}
           <div className="flex items-center gap-0 border-b border-white/10
@@ -1394,7 +1394,7 @@ const TheoryPage = () => {
           </div>
 
           {/* Monaco Editor */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden min-h-[44vh] lg:min-h-0">
             <CodeEditor
               code={code}
               onChange={setCode}

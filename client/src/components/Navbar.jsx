@@ -94,7 +94,7 @@ const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 border-b border-dark-400/50 bg-dark-800/90 backdrop-blur-xl" ref={menuRef}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-3">
+        <div className="flex items-center justify-between h-16 gap-2 sm:gap-3">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 group">
             <div className="p-1.5 bg-yellow-500/20 rounded-xl border border-yellow-500/30 group-hover:border-yellow-400/50 transition-all group-hover:shadow-lg group-hover:shadow-yellow-500/10">
@@ -110,7 +110,7 @@ const Navbar = () => {
           {/* Nav links */}
           {user && (
             <>
-              <div className="hidden md:flex items-center gap-1">
+              <div className="hidden md:flex items-center gap-1 flex-wrap">
                 <DropdownMenu id="learn" label="Learn" />
                 <DropdownMenu id="practice" label="Practice" />
 
@@ -149,7 +149,7 @@ const Navbar = () => {
               </div>
 
               {/* Right side */}
-              <div className="flex items-center gap-2 ml-auto">
+              <div className="flex items-center gap-2 ml-auto flex-shrink-0">
                 {/* Streak indicator */}
                 <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-dark-600/50 rounded-xl border border-dark-400/30">
                   <Flame size={14} className="text-orange-400" />
@@ -166,7 +166,7 @@ const Navbar = () => {
                 <div className="hidden md:block relative group">
                   <button
                     onClick={() => setOpenMenu(openMenu === 'user' ? null : 'user')}
-                    className="flex items-center gap-2 pl-2 pr-3 py-1 bg-dark-600/50 rounded-xl border border-dark-400/30 hover:border-primary-500/30 transition-all"
+                    className="flex items-center gap-2 pl-2 pr-2 sm:pr-3 py-1 bg-dark-600/50 rounded-xl border border-dark-400/30 hover:border-primary-500/30 transition-all max-w-[10rem] sm:max-w-none"
                   >
                     <AvatarDisplay avatar={user?.avatar} size="xs" />
                     <ChevronDown size={12} className="text-slate-500" />
@@ -213,14 +213,14 @@ const Navbar = () => {
       </div>
 
       {user && mobileMenuOpen && (
-        <div className="md:hidden border-t border-dark-400/50 bg-dark-900/96 px-4 pb-4 pt-4 backdrop-blur-xl">
+        <div className="md:hidden border-t border-dark-400/50 bg-dark-900/96 px-3 sm:px-4 pb-4 pt-4 backdrop-blur-xl">
           <div className="space-y-4">
             <div className="rounded-2xl border border-dark-400/40 bg-dark-700/70 p-4 shadow-lg shadow-black/20">
               <div className="flex items-center gap-3">
                 <AvatarDisplay avatar={user?.avatar} size="sm" />
                 <div className="min-w-0">
                   <div className="font-bold text-slate-100 text-sm truncate">{user.username}</div>
-                  <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400">
                     <span className="inline-flex items-center gap-1 rounded-full bg-dark-600/70 px-2 py-1">
                       <Flame size={12} className="text-orange-400" />
                       {user.streak || 0}

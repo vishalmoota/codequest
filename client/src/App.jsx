@@ -33,9 +33,9 @@ const AppLayout = () => {
   const showNavbar = user && !hideNavbarPaths.includes(location.pathname);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-x-hidden">
       {showNavbar && <Navbar />}
-      <main className="flex-1">
+      <main className="flex-1 min-w-0">
         <PageTransition>
           <Routes>
             {/* Public routes */}
@@ -68,8 +68,7 @@ const AppLayout = () => {
           </Routes>
         </PageTransition>
       </main>
-      {/* AI Chatbot floats on all pages except home/login/signup */}
-      {showNavbar && <AIChatbot />}
+      <AIChatbot />
     </div>
   );
 };

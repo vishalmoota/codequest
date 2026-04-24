@@ -420,10 +420,10 @@ const CommunityPage = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex overflow-hidden">
+    <div className="min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
 
       {/* ─── LEFT SIDEBAR ─────────────────────────────────────────────── */}
-      <div className="w-56 flex-shrink-0 border-r border-dark-400/20 bg-dark-800/70 flex flex-col">
+      <div className="w-full lg:w-56 flex-shrink-0 border-b lg:border-b-0 lg:border-r border-dark-400/20 bg-dark-800/70 flex flex-col">
         {/* Header */}
         <div className="px-4 py-4 border-b border-dark-400/15">
           <h2 className="font-black text-slate-100 text-sm flex items-center gap-2">
@@ -469,7 +469,7 @@ const CommunityPage = () => {
       </div>
 
       {/* ─── MAIN CONTENT ─────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="w-full lg:flex-1 flex flex-col min-w-0 overflow-visible lg:overflow-hidden">
         {/* Content header */}
         <div className="px-5 py-3 border-b border-dark-400/20 bg-dark-800/40 flex-shrink-0">
           <h2 className="font-bold text-slate-100 text-sm">
@@ -477,10 +477,10 @@ const CommunityPage = () => {
           </h2>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-visible lg:overflow-hidden">
           {/* Forum */}
           {activeNav === 'forum' && (
-            <div className="h-full px-5 py-4 overflow-auto">
+            <div className="h-full px-4 lg:px-5 py-4 overflow-visible lg:overflow-auto">
               <CommunityForum activeChannel="all" />
             </div>
           )}
@@ -504,21 +504,21 @@ const CommunityPage = () => {
 
           {/* Project Showcase */}
           {activeNav === 'showcase' && (
-            <div className="h-full px-5 py-4 overflow-auto">
+            <div className="h-full px-4 lg:px-5 py-4 overflow-visible lg:overflow-auto">
               <CommunityForum activeChannel="general" />
             </div>
           )}
 
           {/* Project Tutorials Completed */}
           {activeNav === 'project-tutorials-completed' && (
-            <div className="h-full px-5 py-4 overflow-auto">
+            <div className="h-full px-4 lg:px-5 py-4 overflow-visible lg:overflow-auto">
               <CommunityForum activeChannel="project-tutorials-completed" />
             </div>
           )}
 
           {/* Projects Built */}
           {activeNav === 'projects-built' && (
-            <div className="h-full px-5 py-4 overflow-auto">
+            <div className="h-full px-4 lg:px-5 py-4 overflow-visible lg:overflow-auto">
               <CommunityForum activeChannel="projects-built" />
             </div>
           )}
@@ -544,7 +544,7 @@ const CommunityPage = () => {
       </div>
 
       {/* ─── RIGHT SIDEBAR ────────────────────────────────────────────── */}
-      <div className="w-60 flex-shrink-0 border-l border-dark-400/20 bg-dark-800/50 flex flex-col overflow-y-auto">
+      <div className="w-full lg:w-60 flex-shrink-0 border-t lg:border-t-0 lg:border-l border-dark-400/20 bg-dark-800/50 flex flex-col overflow-y-auto">
         {/* News */}
         <div className="p-4 border-b border-dark-400/15">
           <div className="flex items-center gap-2 mb-3">

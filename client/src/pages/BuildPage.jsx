@@ -405,8 +405,8 @@ const BuildPage = () => {
   // ── IDE view (project open) ─────────────────────────────────
   if (activeProject) {
     return (
-      <div className="h-screen bg-gray-950 text-white flex flex-col
-                      overflow-hidden">
+            <div className="min-h-screen lg:h-screen bg-gray-950 text-white flex flex-col
+              overflow-y-auto lg:overflow-hidden overflow-x-hidden">
 
         {/* Top bar */}
         <div className="flex items-center justify-between px-4 py-2
@@ -461,11 +461,11 @@ const BuildPage = () => {
         </div>
 
         {/* Split screen */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
 
           {/* LEFT — Editor */}
-          <div className="w-1/2 flex flex-col border-r
-                          border-white/10 overflow-hidden">
+          <div className="order-1 w-full lg:w-1/2 flex flex-col border-b lg:border-b-0 lg:border-r
+                          border-white/10 overflow-hidden min-h-[56vh] sm:min-h-[58vh] lg:min-h-0">
             {/* File tab */}
             <div className="flex items-center px-4 bg-gray-900
                             border-b border-white/10 flex-shrink-0">
@@ -483,7 +483,7 @@ const BuildPage = () => {
             </div>
 
             {/* Monaco Editor */}
-            <div className="flex-1 overflow-hidden">
+            <div className="h-[42vh] sm:h-[46vh] lg:flex-1 lg:h-auto overflow-hidden">
               <Editor
                 height="100%"
                 language={langConfig.monacoLang}
@@ -504,9 +504,9 @@ const BuildPage = () => {
 
             {/* Run button bar */}
             <div
-              className="flex items-center justify-between px-4
+                className="flex items-center justify-between px-4
                          py-2 bg-gray-900 border-t border-white/10
-                         flex-shrink-0"
+                     flex-shrink-0"
             >
               <span className="text-xs text-gray-500 font-mono">
                 {activeProject.runCount > 0
@@ -538,8 +538,8 @@ const BuildPage = () => {
           </div>
 
           {/* RIGHT — Terminal */}
-          <div className="w-1/2 flex flex-col overflow-hidden
-                          bg-gray-900">
+          <div className="order-2 w-full lg:w-1/2 flex flex-col overflow-hidden
+                          bg-gray-900 min-h-[34vh] sm:min-h-[36vh] lg:min-h-0">
             {/* Terminal header */}
             <div
               className="px-4 py-2 text-xs font-mono border-b
@@ -565,7 +565,7 @@ const BuildPage = () => {
             </div>
 
             {/* Output */}
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-4 min-h-[20vh]">
               {output ? (
                 <pre
                   className="font-mono text-sm whitespace-pre-wrap

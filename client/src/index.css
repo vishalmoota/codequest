@@ -179,6 +179,10 @@
 @layer base {
   * { box-sizing: border-box; }
   html { scroll-behavior: auto; }
+  html, body, #root {
+    width: 100%;
+    max-width: 100%;
+  }
   body {
     @apply bg-dark-900 text-slate-100 font-sans;
     background: var(--bg-primary);
@@ -192,6 +196,20 @@
     color: var(--text-primary);
     text-rendering: geometricPrecision;
     -webkit-font-smoothing: antialiased;
+  }
+
+  main, section, article, aside, div {
+    min-width: 0;
+  }
+
+  img, video, canvas, svg, iframe {
+    max-width: 100%;
+    height: auto;
+  }
+
+  pre {
+    max-width: 100%;
+    overflow-x: auto;
   }
 
   * {
@@ -217,6 +235,17 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(180deg, #7b2fff 0%, #00f5ff 100%);
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    font-size: 15px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
   }
 }
 
