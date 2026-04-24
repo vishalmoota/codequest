@@ -382,8 +382,8 @@ export default function AIChatbot() {
         <div
           ref={chatWindowRef}
           style={{
-            position: 'fixed', bottom: '84px', right: '16px', left: '16px', zIndex: 9999,
-            width: 'auto',
+            position: 'fixed', bottom: '84px', right: '16px', left: 'auto', zIndex: 9999,
+            width: 'min(420px, calc(100vw - 32px))',
             maxWidth: '420px',
             height: isMinimized ? '60px' : 'min(600px, calc(100vh - 104px))',
             background: '#0f1117',
