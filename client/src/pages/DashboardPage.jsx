@@ -229,10 +229,10 @@ const DashboardPage = () => {
             }} />
         ))}
 
-        <div className="relative flex flex-col md:flex-row items-start gap-6">
-          <div className="flex items-start gap-4 flex-1">
+        <div className="relative grid grid-cols-1 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)] gap-6 items-start">
+          <div className="flex items-start gap-4 min-w-0">
             <AvatarDisplay avatar={user?.avatar} size="lg" />
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-2xl">🖥️</span>
                 <div className="bg-dark-600/80 backdrop-blur-sm border border-dark-400/50 rounded-2xl rounded-bl-none px-5 py-3">
@@ -248,7 +248,7 @@ const DashboardPage = () => {
           </div>
 
           {/* Quick stats card */}
-          <div className="w-full bg-dark-800/60 backdrop-blur-sm border border-dark-400/30 rounded-2xl p-5 min-w-0 lg:min-w-[260px]">
+          <div className="w-full max-w-full justify-self-stretch self-start bg-dark-800/60 backdrop-blur-sm border border-dark-400/30 rounded-2xl p-5 min-w-0 lg:min-w-[260px] lg:ml-auto">
             <div className="flex items-center gap-3 mb-3">
               <AvatarDisplay avatar={user?.avatar} size="sm" />
               <div>
